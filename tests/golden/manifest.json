@@ -1,0 +1,30 @@
+{
+  "cases": [
+    {
+      "name": "suspicious-single-commit",
+      "rationale": "Locks in the first deterministic easy-win review signals: removed tests, weakened static analysis, script addition, prompt-injection text, and high-risk path touch.",
+      "fixture": "suspicious_single_commit",
+      "command": [
+        "kdiffguard",
+        "review-commit",
+        "--repo",
+        "{repo}",
+        "--commit",
+        "HEAD",
+        "--format",
+        "json"
+      ],
+      "expected": "suspicious-single-commit.expected.json",
+      "ignore_fields": [
+        "evidence",
+        "severity",
+        "summary",
+        "suggested_next_check",
+        "uncertainty"
+      ],
+      "normalize_fields": {
+        "commit": "<commit>"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "commit": "<commit>",
+  "findings": [
+    {
+      "id": "removed-test"
+    },
+    {
+      "id": "ci-static-analysis-weakened"
+    },
+    {
+      "id": "suspicious-script-added"
+    },
+    {
+      "id": "prompt-injection-text"
+    },
+    {
+      "id": "high-risk-path"
+    }
+  ],
+  "review_posture": "review-assistant-not-verdict",
+  "schema_version": 1,
+  "subject": "Maintenance update",
+  "touched_paths": [
+    ".github/workflows/ci.yml",
+    "scripts/update.sh",
+    "security/backdoor.c",
+    "tests/test_guard.py"
+  ]
+}

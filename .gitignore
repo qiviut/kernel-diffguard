@@ -9,3 +9,5 @@ build/
 *.egg-info/
 .coverage
 htmlcov/
+.golden-work/
+tests/.golden-work/
