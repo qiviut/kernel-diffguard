@@ -7,31 +7,39 @@
 - Initial architecture and roadmap docs.
 - Minimal tested Python package and CLI placeholder.
 
-## Milestone 1: deterministic git range facts
+## Milestone 1: single-commit reviewer for local and GitHub-hosted commits
 
-- Accept local repo path, base commit X, target commit Y.
-- Emit commits, authors, dates, touched paths, diff stats, renames, signatures/tags when present.
-- Store output as stable JSON for downstream tooling.
-- Include fixtures for small synthetic histories.
+- Accept a local repo path plus commit SHA, and later GitHub commit URLs or owner/repo@sha inputs.
+- Resolve every input to a specific commit and repository identity before analysis.
+- Emit commit metadata, parent/tree IDs, touched paths, diff stats, renames, bounded diff excerpts, and trust-boundary labels as stable JSON.
+- Run first deterministic review signals: removed tests, weakened CI/static analysis, suspicious executable/script additions, prompt-injection text, and high-risk paths.
+- Include synthetic git fixtures and mocked GitHub fixtures; default CI must not require network access.
 
-## Milestone 2: Linux-kernel impact hints
+## Milestone 2: GitHub PR review input
+
+- Accept GitHub PR URLs or owner/repo#number inputs in read-only mode.
+- Resolve base/head SHAs and ordered commits, then compose the single-commit reviewer output.
+- Emit a PR-level summary with changed-risk areas, easy-win findings, evidence references, and suggested next checks.
+- Treat PR titles, bodies, comments, labels, branch names, patches, and GitHub API metadata as hostile input.
+
+## Milestone 3: Linux-kernel impact hints
 
 - Map touched paths to kernel subsystems and maintainers where practical.
 - Identify Kconfig, driver, arch, syscall, filesystem, networking, scheduler, memory-management, and security-sensitive surfaces.
 - Generate initial retest hints.
 
-## Milestone 3: discussion correlation
+## Milestone 4: discussion correlation
 
 - Link commits/patch IDs/subjects to lore.kernel.org or other mailing-list archives.
 - Track patch series revisions and review tags.
 - Extract objections, acks, tested-by tags, and unresolved questions as evidence.
 
-## Milestone 4: malicious-change and integrity heuristics
+## Milestone 5: malicious-change and integrity heuristics
 
 - Provenance anomaly checks: author/committer changes, signing gaps, suspicious timestamps, unusual review paths.
 - Multi-commit behavior checks: suspicious split changes, setup/use separation, semantic drift across refactors.
 - Tree/artifact checks: object reachability, clean checkout verification, generated artifact comparison, reproducibility hooks.
 
-## Milestone 5: review packets
+## Milestone 6: review packets
 
 - Combine facts, context, risk hints, retest guidance, and uncertainty into a compact artifact suitable for release review.

@@ -14,28 +14,50 @@ The Linux kernel is the first exemplar because it has scale, subsystem structure
 1. Repository evidence collector
    - Reads git objects, refs, commits, tags, notes, diffs, signatures, and path-level history.
    - Never treats repository data as trusted just because `git` can parse it.
-2. Range impact analyzer
+2. GitHub input resolver
+   - Accepts github.com commit and PR URLs, plus compact owner/repo@sha and owner/repo#number references.
+   - Resolves remote inputs to immutable SHAs, repository identity, ordered commits, and provenance metadata before analysis.
+   - Starts read-only; posting PR comments or acting as a bot is a later explicit integration.
+3. Single-commit reviewer
+   - Normalizes one commit into bounded evidence, runs first deterministic checks, and emits JSON/text findings.
+   - Serves as the product-shaped core that local, GitHub commit, range, and PR modes compose.
+4. Range impact analyzer
    - Turns X..Y into changed files, symbols when available, configs, subsystems, and likely runtime surfaces.
    - Produces retest recommendations tied to evidence.
-3. Provenance and integrity analyzer
+5. Provenance and integrity analyzer
    - Looks for authorship, review, signing, timestamp, ref, tree, submodule, and generated-artifact anomalies.
    - Separates ordinary suspicious commits from out-of-band tree or binary injection checks.
-4. Patch complexity and obviousness scorer
+6. Patch complexity and obviousness scorer
    - Flags small mechanical changes, high-risk semantic changes, and changes too complex for casual review.
    - Must explain features, not emit opaque scores alone.
-5. Discussion/context correlator
+7. Discussion/context correlator
    - Searches mailing-list archives and public review systems for patch discussion, vN series history, review tags, objections, and maintainer context.
-6. Review packet generator
+8. Review packet generator
    - Emits a concise packet containing facts, links, uncertainties, retest guidance, and suggested next checks.
 
 ## Boundaries and trust zones
 
 - Hostile input: git repository contents, commit metadata, emails, web pages, patches, logs, binaries, generated files.
+- Hostile remote input: GitHub PR titles, descriptions, comments, labels, branch names, user/profile fields, API metadata, rendered HTML, and downloadable patches.
 - Deterministic low-privilege zone: parsers, reducers, hashing, object inspection, and schema normalization.
 - Heuristic/model-assisted zone: summarization, anomaly explanation, semantic patch review. This zone receives reduced evidence, not raw unbounded hostile input by default.
 - Human decision zone: final trust and release decisions remain explicit human/organization policy decisions.
 
 ## Key flows
+
+### GitHub-hosted commit review
+
+1. User supplies a github.com commit URL or owner/repo@sha input.
+2. GitHub resolver validates the host and resolves the input to a repository identity plus immutable commit SHA.
+3. Collector fetches or reuses a controlled local clone/cache without executing repository hooks or scripts.
+4. Single-commit reviewer emits deterministic facts, risk hints, evidence references, and suggested next checks.
+
+### GitHub PR review
+
+1. User supplies a github.com PR URL or owner/repo#number input.
+2. GitHub resolver records PR metadata as hostile evidence and resolves base/head SHAs plus ordered commits.
+3. Reviewer runs the single-commit reviewer over each commit or an explicit range artifact.
+4. Review packet generator emits a read-only PR summary; posting comments is a later explicit integration.
 
 ### Commit range analysis
 
