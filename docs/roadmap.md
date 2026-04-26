@@ -14,6 +14,7 @@
 - Emit commit metadata, parent/tree IDs, touched paths, diff stats, renames, bounded diff excerpts, and trust-boundary labels as stable JSON.
 - Run first deterministic review signals: removed tests, weakened CI/static analysis, suspicious executable/script additions, prompt-injection text, and high-risk paths.
 - Include synthetic git fixtures and mocked GitHub fixtures; default CI must not require network access.
+- Start golden analysis regression cases once the reviewer output for specific fixture commits becomes useful.
 
 ## Milestone 2: GitHub PR review input
 
@@ -21,6 +22,14 @@
 - Resolve base/head SHAs and ordered commits, then compose the single-commit reviewer output.
 - Emit a PR-level summary with changed-risk areas, easy-win findings, evidence references, and suggested next checks.
 - Treat PR titles, bodies, comments, labels, branch names, patches, and GitHub API metadata as hostile input.
+- Add PR-shaped golden cases so CI catches changes in summarized findings and evidence references.
+
+## Milestone 2.5: golden analysis regression in CI
+
+- Maintain a versioned manifest of selected commits/PRs, expected normalized analysis results, and allowed volatile fields.
+- Run the reviewer against those cases in GitHub Actions after unit/lint/type checks.
+- Fail with a human-readable diff when stable findings change.
+- Treat changed output as either a regression to fix or an intentional analysis improvement that requires updating the golden result with rationale.
 
 ## Milestone 3: Linux-kernel impact hints
 

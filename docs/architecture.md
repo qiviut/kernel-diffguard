@@ -78,9 +78,10 @@ The Linux kernel is the first exemplar because it has scale, subsystem structure
 
 Early evidence should include:
 
-- reproducible tests for git range parsing,
+- reproducible tests for git and GitHub input parsing,
 - golden fixtures for tricky histories,
 - explicit hostile-input fixtures,
+- golden analysis regression cases that compare normalized reviewer output for selected commits/PRs,
 - documented heuristics for impact and complexity,
 - traceable links from recommendations back to facts.
 
