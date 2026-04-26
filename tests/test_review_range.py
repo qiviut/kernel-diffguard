@@ -5,8 +5,10 @@ import os
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from kernel_diffguard.cli import main
-from kernel_diffguard.range_review import review_range
+from kernel_diffguard.range_review import RangeReviewError, review_commits, review_range
 
 
 def run_git(repo: Path, *args: str) -> str:
@@ -76,6 +78,75 @@ def test_review_range_empty_range_is_explicit(tmp_path: Path):
     assert result["commits"] == []
     assert result["findings_by_commit"] == {}
     assert result["range"]["errors"] == []
+
+
+def test_review_commit_list_preserves_explicit_order_and_duplicates(tmp_path: Path):
+    repo, _base, first, second = make_linear_repo(tmp_path)
+
+    result = review_commits(repo, commits=[second, first, second])
+
+    assert result["range"]["traversal"] == "explicit-commit-list"
+    assert result["range"]["commit_count"] == 3
+    assert [commit["commit"] for commit in result["commits"]] == [second, first, second]
+    assert set(result["findings_by_commit"]) == {first, second}
+
+
+def test_review_range_invalid_revision_fails_closed(tmp_path: Path):
+    repo, base, _first, _second = make_linear_repo(tmp_path)
+
+    with pytest.raises(RangeReviewError) as exc_info:
+        review_range(repo, base=base, target="does-not-exist")
+
+    assert exc_info.value.kind == "invalid-revision"
+    assert "does-not-exist" in exc_info.value.revision
+    assert "does-not-exist" in str(exc_info.value)
+
+
+def test_review_range_cli_reports_invalid_revision_without_traceback(tmp_path: Path, capsys):
+    repo, base, _first, _second = make_linear_repo(tmp_path)
+
+    exit_code = main(
+        [
+            "review-range",
+            "--repo",
+            str(repo),
+            "--base",
+            base,
+            "--target",
+            "does-not-exist",
+            "--format",
+            "json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert captured.out == ""
+    assert "invalid-revision" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_review_range_cli_accepts_explicit_commit_list(tmp_path: Path, capsys):
+    repo, _base, first, second = make_linear_repo(tmp_path)
+
+    exit_code = main(
+        [
+            "review-range",
+            "--repo",
+            str(repo),
+            "--commit",
+            second,
+            "--commit",
+            first,
+            "--format",
+            "json",
+        ]
+    )
+
+    assert exit_code == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output["range"]["traversal"] == "explicit-commit-list"
+    assert [commit["commit"] for commit in output["commits"]] == [second, first]
 
 
 def test_review_range_cli_emits_json(tmp_path: Path, capsys):

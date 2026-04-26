@@ -3,14 +3,23 @@
 from __future__ import annotations
 
 import argparse
+import sys
 
 from .charter import summarize_goals
 from .commit_review import render_json as render_commit_json
 from .commit_review import render_text as render_commit_text
 from .commit_review import review_commit
-from .range_review import render_json as render_range_json
-from .range_review import render_text as render_range_text
-from .range_review import review_range
+from .range_review import (
+    RangeReviewError,
+    review_commits,
+    review_range,
+)
+from .range_review import (
+    render_json as render_range_json,
+)
+from .range_review import (
+    render_text as render_range_text,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -42,16 +51,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     review_range_parser = subparsers.add_parser(
         "review-range",
-        help="review a local git commit range and emit deterministic findings",
+        help="review a local git commit range or explicit commit list",
     )
     review_range_parser.add_argument(
         "--repo", required=True, help="path to a local git repository"
     )
     review_range_parser.add_argument(
-        "--base", required=True, help="base commit SHA or revision, excluded from review"
+        "--base", help="base commit SHA or revision, excluded from review"
     )
     review_range_parser.add_argument(
-        "--target", required=True, help="target commit SHA or revision, included in review"
+        "--target", help="target commit SHA or revision, included in review"
+    )
+    review_range_parser.add_argument(
+        "--commit",
+        action="append",
+        default=[],
+        help="explicit commit SHA or revision to review; may be repeated",
     )
     review_range_parser.add_argument(
         "--format",
@@ -76,7 +91,22 @@ def main(argv: list[str] | None = None) -> int:
             print(render_commit_text(review))
         return 0
     if args.command == "review-range":
-        review = review_range(args.repo, base=args.base, target=args.target)
+        try:
+            if args.commit:
+                if args.base or args.target:
+                    parser.error(
+                        "review-range accepts either --commit entries or --base/--target, not both"
+                    )
+                review = review_commits(args.repo, commits=args.commit)
+            else:
+                if not args.base or not args.target:
+                    parser.error(
+                        "review-range requires --base and --target unless --commit is used"
+                    )
+                review = review_range(args.repo, base=args.base, target=args.target)
+        except RangeReviewError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
         if args.format == "json":
             print(render_range_json(review), end="")
         else:
