@@ -67,12 +67,14 @@ def _run_case(case: JsonObject, base_dir: Path) -> JsonObject:
     repo = _prepare_fixture(case, base_dir)
     replacements = {"{repo}": str(repo)} if repo is not None else {}
     command = [_replace_tokens(str(item), replacements) for item in case["command"]]
+    command = _resolve_command(command)
     completed = subprocess.run(
         command,
         cwd=base_dir.parent,
         check=False,
         text=True,
         capture_output=True,
+        env=_subprocess_env(),
     )
     if completed.returncode != 0:
         raise RuntimeError(
@@ -188,6 +190,26 @@ def _replace_tokens(value: str, replacements: dict[str, str]) -> str:
     for token, replacement in replacements.items():
         result = result.replace(token, replacement)
     return result
+
+
+def _subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    src_path = str(Path(__file__).resolve().parents[1])
+    existing_pythonpath = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = (
+        src_path if not existing_pythonpath else f"{src_path}{os.pathsep}{existing_pythonpath}"
+    )
+    return env
+
+
+def _resolve_command(command: list[str]) -> list[str]:
+    if not command:
+        raise ValueError("golden case command must not be empty")
+    if command[0] == "python":
+        return [sys.executable, *command[1:]]
+    if command[0] == "kdiffguard":
+        return [sys.executable, "-m", "kernel_diffguard.cli", *command[1:]]
+    return command
 
 
 def _diff_case(case_name: str, expected: JsonObject, actual: JsonObject) -> str:

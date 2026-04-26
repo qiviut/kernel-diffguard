@@ -33,4 +33,10 @@ Repository contents, commit metadata, mailing-list text, build logs, generated a
 
 ## Status
 
-Fresh project skeleton. See `docs/architecture.md` and `docs/roadmap.md` for the starting design.
+Early CLI and regression skeleton are in place. The current deterministic reviewer can:
+
+- review one local commit with `kdiffguard review-commit --repo PATH --commit SHA --format json|text`,
+- review a local base-exclusive/target-inclusive range with `kdiffguard review-range --repo PATH --base X --target Y --format json|text`, and
+- run golden analysis regression cases with `scripts/run-golden-analysis.sh`.
+
+Current findings are intentionally simple reviewer-assistance signals, not verdicts: removed tests, CI/static-analysis changes, suspicious script additions, prompt-injection-like text, and high-risk kernel/build paths. See `docs/architecture.md` and `docs/roadmap.md` for the starting design.
