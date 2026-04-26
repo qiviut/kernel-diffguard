@@ -1,0 +1,94 @@
+{
+  "commits": [
+    {
+      "commit": "<commit>",
+      "findings": [
+        {
+          "id": "removed-test"
+        },
+        {
+          "id": "ci-static-analysis-weakened"
+        },
+        {
+          "id": "suspicious-script-added"
+        },
+        {
+          "id": "prompt-injection-text"
+        },
+        {
+          "id": "high-risk-path"
+        }
+      ],
+      "review_posture": "review-assistant-not-verdict",
+      "schema_version": 1,
+      "subject": "Maintenance update",
+      "touched_paths": [
+        ".github/workflows/ci.yml",
+        "scripts/update.sh",
+        "security/backdoor.c",
+        "tests/test_guard.py"
+      ]
+    }
+  ],
+  "findings_by_commit": {
+    "<commit>": [
+      {
+        "id": "removed-test"
+      },
+      {
+        "id": "ci-static-analysis-weakened"
+      },
+      {
+        "id": "suspicious-script-added"
+      },
+      {
+        "id": "prompt-injection-text"
+      },
+      {
+        "id": "high-risk-path"
+      }
+    ]
+  },
+  "range": {
+    "base": "<base>",
+    "commit_count": 1,
+    "errors": [],
+    "target": "<target>",
+    "traversal": "base-exclusive-target-inclusive"
+  },
+  "range_signals": {
+    "authors": [
+      {
+        "commit_count": 1,
+        "commits": [
+          "<commit>"
+        ],
+        "email": "golden@example.test",
+        "finding_ids": {
+          "ci-static-analysis-weakened": 1,
+          "high-risk-path": 1,
+          "prompt-injection-text": 1,
+          "removed-test": 1,
+          "suspicious-script-added": 1
+        },
+        "name": "Golden Fixture"
+      }
+    ],
+    "finding_ids": {
+      "ci-static-analysis-weakened": 1,
+      "high-risk-path": 1,
+      "prompt-injection-text": 1,
+      "removed-test": 1,
+      "suspicious-script-added": 1
+    },
+    "touched_path_count": 4,
+    "touched_paths": [
+      ".github/workflows/ci.yml",
+      "scripts/update.sh",
+      "security/backdoor.c",
+      "tests/test_guard.py"
+    ]
+  },
+  "review_posture": "review-assistant-not-verdict",
+  "schema_version": 1
+}

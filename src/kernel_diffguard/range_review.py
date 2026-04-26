@@ -100,11 +100,61 @@ def _review_commit_sequence(
             "commit_count": len(commits),
             "errors": [],
         },
+        "range_signals": _range_signals(repo, commit_reviews),
         "commits": commit_reviews,
         "findings_by_commit": {
             review["commit"]: review.get("findings", []) for review in commit_reviews
         },
     }
+
+
+def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
+    finding_ids: dict[str, int] = {}
+    touched_paths: set[str] = set()
+    authors_by_key: dict[tuple[str, str], JsonObject] = {}
+
+    for commit_review in commit_reviews:
+        commit = str(commit_review["commit"])
+        author = _commit_author(repo, commit)
+        author_key = (author["name"], author["email"])
+        author_entry = authors_by_key.setdefault(
+            author_key,
+            {
+                "name": author["name"],
+                "email": author["email"],
+                "commit_count": 0,
+                "commits": [],
+                "finding_ids": {},
+            },
+        )
+        author_entry["commit_count"] += 1
+        author_entry["commits"].append(commit)
+
+        touched_paths.update(str(path) for path in commit_review.get("touched_paths", []))
+        for finding in commit_review.get("findings", []):
+            finding_id = str(finding["id"])
+            finding_ids[finding_id] = finding_ids.get(finding_id, 0) + 1
+            author_finding_ids = author_entry["finding_ids"]
+            author_finding_ids[finding_id] = author_finding_ids.get(finding_id, 0) + 1
+
+    return {
+        "authors": [
+            {
+                **author,
+                "finding_ids": dict(sorted(author["finding_ids"].items())),
+            }
+            for author in authors_by_key.values()
+        ],
+        "finding_ids": dict(sorted(finding_ids.items())),
+        "touched_path_count": len(touched_paths),
+        "touched_paths": sorted(touched_paths),
+    }
+
+
+def _commit_author(repo: Path, commit: str) -> dict[str, str]:
+    raw = _git(repo, "show", "-s", "--format=%an%x00%ae", commit).strip()
+    name, email = raw.split("\x00", maxsplit=1)
+    return {"name": name, "email": email}
 
 
 def _rev_parse(repo: Path, revision: str) -> str:

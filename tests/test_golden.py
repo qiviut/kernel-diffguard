@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from kernel_diffguard.golden import run_golden_manifest
 
 
@@ -98,6 +100,120 @@ def test_golden_runner_prepares_builtin_suspicious_commit_fixture(tmp_path: Path
 
     assert result.exit_code == 0
     assert result.case_count == 1
+
+
+def test_golden_runner_normalizes_field_values_when_repeated_as_keys_or_list_items(
+    tmp_path: Path,
+):
+    expected = tmp_path / "expected.json"
+    expected.write_text(
+        json.dumps(
+            {
+                "commit": "<commit>",
+                "commits": ["<commit>"],
+                "findings_by_commit": {"<commit>": [{"id": "signal"}]},
+            },
+            indent=2,
+        )
+    )
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "cases": [
+                    {
+                        "name": "normalized-nested-commit",
+                        "command": [
+                            "python",
+                            "-c",
+                            "import json; print(json.dumps({'commit': 'abc123', "
+                            "'commits': ['abc123'], "
+                            "'findings_by_commit': {'abc123': [{'id': 'signal'}]}}))",
+                        ],
+                        "expected": str(expected),
+                        "normalize_fields": {"commit": "<commit>"},
+                    }
+                ]
+            }
+        )
+    )
+
+    result = run_golden_manifest(manifest)
+
+    assert result.exit_code == 0
+    assert result.changed_cases == []
+
+
+def test_golden_runner_uses_manifest_order_for_repeated_value_collisions(
+    tmp_path: Path,
+):
+    expected = tmp_path / "expected.json"
+    expected.write_text(
+        json.dumps(
+            {
+                "commit": "<commit>",
+                "target": "<target>",
+                "commits": ["<commit>"],
+                "findings_by_commit": {"<commit>": [{"id": "signal"}]},
+            },
+            indent=2,
+        )
+    )
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "cases": [
+                    {
+                        "name": "normalized-collision",
+                        "command": [
+                            "python",
+                            "-c",
+                            "import json; print(json.dumps({'commit': 'abc123', "
+                            "'target': 'abc123', 'commits': ['abc123'], "
+                            "'findings_by_commit': {'abc123': [{'id': 'signal'}]}}))",
+                        ],
+                        "expected": str(expected),
+                        "normalize_fields": {"commit": "<commit>", "target": "<target>"},
+                    }
+                ]
+            }
+        )
+    )
+
+    result = run_golden_manifest(manifest)
+
+    assert result.exit_code == 0
+    assert result.changed_cases == []
+
+
+def test_golden_runner_rejects_normalized_key_collisions(tmp_path: Path):
+    expected = tmp_path / "expected.json"
+    expected.write_text(json.dumps({"<commit>": {"id": "expected"}}, indent=2))
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "cases": [
+                    {
+                        "name": "normalized-key-collision",
+                        "command": [
+                            "python",
+                            "-c",
+                            "import json; print(json.dumps({'commit': 'abc123', "
+                            "'abc123': {'id': 'actual'}, "
+                            "'<commit>': {'id': 'preexisting'}}))",
+                        ],
+                        "expected": str(expected),
+                        "normalize_fields": {"commit": "<commit>"},
+                    }
+                ]
+            }
+        )
+    )
+
+    with pytest.raises(ValueError, match="normalization collision"):
+        run_golden_manifest(manifest)
 
 
 def test_golden_runner_reports_finding_diff(tmp_path: Path):

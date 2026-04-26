@@ -25,6 +25,36 @@
       "normalize_fields": {
         "commit": "<commit>"
       }
+    },
+    {
+      "name": "suspicious-range",
+      "rationale": "Locks in range-level review output, including cumulative author, finding, and touched-path signals over a base-exclusive target-inclusive span.",
+      "fixture": "suspicious_single_commit",
+      "command": [
+        "kdiffguard",
+        "review-range",
+        "--repo",
+        "{repo}",
+        "--base",
+        "HEAD~1",
+        "--target",
+        "HEAD",
+        "--format",
+        "json"
+      ],
+      "expected": "suspicious-range.expected.json",
+      "ignore_fields": [
+        "evidence",
+        "severity",
+        "summary",
+        "suggested_next_check",
+        "uncertainty"
+      ],
+      "normalize_fields": {
+        "base": "<base>",
+        "commit": "<commit>",
+        "target": "<target>"
+      }
     }
   ]
 }

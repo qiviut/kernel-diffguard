@@ -96,11 +96,12 @@ def _normalize_json(
     value: JsonObject, ignore_fields: object, normalize_fields: object
 ) -> JsonObject:
     ignored = {str(field) for field in ignore_fields} if isinstance(ignore_fields, list) else set()
-    replacements = (
-        {str(key): replacement for key, replacement in normalize_fields.items()}
+    field_replacements = (
+        {str(key): str(replacement) for key, replacement in normalize_fields.items()}
         if isinstance(normalize_fields, dict)
         else {}
     )
+    value_replacements = _collect_value_replacements(value, field_replacements, ignored)
 
     def normalize(item: object) -> object:
         if isinstance(item, dict):
@@ -109,16 +110,58 @@ def _normalize_json(
                 key_text = str(key)
                 if key_text in ignored:
                     continue
-                result[key_text] = replacements.get(key_text, normalize(val))
+                normalized_key = value_replacements.get(key_text, key_text)
+                normalized_value = field_replacements.get(
+                    key_text, value_replacements.get(str(val), normalize(val))
+                )
+                if normalized_key in result:
+                    raise ValueError(
+                        f"normalization collision for key {normalized_key!r}: "
+                        f"multiple source keys normalize to the same output key"
+                    )
+                result[normalized_key] = normalized_value
             return result
         if isinstance(item, list):
             return [normalize(v) for v in item]
+        if isinstance(item, str):
+            return value_replacements.get(item, item)
         return item
 
     normalized = normalize(value)
     if not isinstance(normalized, dict):
         raise TypeError("golden case JSON output must be an object")
     return normalized
+
+
+def _collect_value_replacements(
+    value: object, field_replacements: dict[str, str], ignored: set[str]
+) -> dict[str, str]:
+    value_replacements: dict[str, str] = {}
+
+    for field_name, replacement in field_replacements.items():
+        for field_value in _field_values(value, field_name, ignored):
+            value_replacements.setdefault(field_value, replacement)
+    return value_replacements
+
+
+def _field_values(value: object, field_name: str, ignored: set[str]) -> list[str]:
+    values: list[str] = []
+
+    def collect(item: object) -> None:
+        if isinstance(item, dict):
+            for key, val in item.items():
+                key_text = str(key)
+                if key_text in ignored:
+                    continue
+                if key_text == field_name and isinstance(val, str):
+                    values.append(val)
+                collect(val)
+        elif isinstance(item, list):
+            for val in item:
+                collect(val)
+
+    collect(value)
+    return values
 
 
 def _prepare_fixture(case: JsonObject, base_dir: Path) -> Path | None:

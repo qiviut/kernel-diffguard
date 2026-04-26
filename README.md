@@ -36,7 +36,10 @@ Repository contents, commit metadata, mailing-list text, build logs, generated a
 Early CLI and regression skeleton are in place. The current deterministic reviewer can:
 
 - review one local commit with `kdiffguard review-commit --repo PATH --commit SHA --format json|text`,
-- review a local base-exclusive/target-inclusive range with `kdiffguard review-range --repo PATH --base X --target Y --format json|text`, and
+- review a local base-exclusive/target-inclusive range with `kdiffguard review-range --repo PATH --base X --target Y --format json|text`,
+- review an explicit ordered commit list with `kdiffguard review-range --repo PATH --commit SHA --commit SHA --format json|text`, and
 - run golden analysis regression cases with `scripts/run-golden-analysis.sh`.
+
+Range JSON includes cumulative `range_signals`: stable author buckets, finding-id counts, and touched-path summaries across the reviewed span. This is intentionally first-class evidence for X→Y review rather than just a pile of individual commit reports.
 
 Current findings are intentionally simple reviewer-assistance signals, not verdicts: removed tests, CI/static-analysis changes, suspicious script additions, prompt-injection-like text, and high-risk kernel/build paths. See `docs/architecture.md` and `docs/roadmap.md` for the starting design.
