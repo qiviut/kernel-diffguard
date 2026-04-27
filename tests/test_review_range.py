@@ -89,6 +89,7 @@ def test_review_range_empty_range_is_explicit(tmp_path: Path):
     assert result["range_signals"] == {
         "authors": [],
         "finding_ids": {},
+        "path_prefixes": {},
         "touched_path_count": 0,
         "touched_paths": [],
     }
@@ -116,6 +117,7 @@ def test_review_range_emits_cumulative_author_and_diff_signals(tmp_path: Path):
                 "commit_count": 2,
                 "commits": [first, result["commits"][1]["commit"]],
                 "finding_ids": {"high-risk-path": 1},
+                "path_prefixes": {"docs": 1, "drivers": 1},
             },
             {
                 "name": "Second Author",
@@ -123,9 +125,11 @@ def test_review_range_emits_cumulative_author_and_diff_signals(tmp_path: Path):
                 "commit_count": 1,
                 "commits": [third],
                 "finding_ids": {"high-risk-path": 1},
+                "path_prefixes": {"kernel": 1},
             },
         ],
         "finding_ids": {"high-risk-path": 2},
+        "path_prefixes": {"docs": 1, "drivers": 1, "kernel": 1},
         "touched_path_count": 3,
         "touched_paths": ["docs/notes.txt", "drivers/net.c", "kernel/scheduler.c"],
     }

@@ -71,7 +71,13 @@
           "removed-test": 1,
           "suspicious-script-added": 1
         },
-        "name": "Golden Fixture"
+        "name": "Golden Fixture",
+        "path_prefixes": {
+          ".github": 1,
+          "scripts": 1,
+          "security": 1,
+          "tests": 1
+        }
       }
     ],
     "finding_ids": {
@@ -80,6 +86,12 @@
       "prompt-injection-text": 1,
       "removed-test": 1,
       "suspicious-script-added": 1
+    },
+    "path_prefixes": {
+      ".github": 1,
+      "scripts": 1,
+      "security": 1,
+      "tests": 1
     },
     "touched_path_count": 4,
     "touched_paths": [

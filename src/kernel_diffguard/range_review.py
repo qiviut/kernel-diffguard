@@ -110,6 +110,7 @@ def _review_commit_sequence(
 
 def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
     finding_ids: dict[str, int] = {}
+    path_prefixes: dict[str, int] = {}
     touched_paths: set[str] = set()
     authors_by_key: dict[tuple[str, str], JsonObject] = {}
 
@@ -125,12 +126,19 @@ def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
                 "commit_count": 0,
                 "commits": [],
                 "finding_ids": {},
+                "path_prefixes": {},
             },
         )
         author_entry["commit_count"] += 1
         author_entry["commits"].append(commit)
 
-        touched_paths.update(str(path) for path in commit_review.get("touched_paths", []))
+        for path in commit_review.get("touched_paths", []):
+            path_text = str(path)
+            touched_paths.add(path_text)
+            prefix = _path_prefix(path_text)
+            path_prefixes[prefix] = path_prefixes.get(prefix, 0) + 1
+            author_path_prefixes = author_entry["path_prefixes"]
+            author_path_prefixes[prefix] = author_path_prefixes.get(prefix, 0) + 1
         for finding in commit_review.get("findings", []):
             finding_id = str(finding["id"])
             finding_ids[finding_id] = finding_ids.get(finding_id, 0) + 1
@@ -142,13 +150,19 @@ def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
             {
                 **author,
                 "finding_ids": dict(sorted(author["finding_ids"].items())),
+                "path_prefixes": dict(sorted(author["path_prefixes"].items())),
             }
             for author in authors_by_key.values()
         ],
         "finding_ids": dict(sorted(finding_ids.items())),
+        "path_prefixes": dict(sorted(path_prefixes.items())),
         "touched_path_count": len(touched_paths),
         "touched_paths": sorted(touched_paths),
     }
+
+
+def _path_prefix(path: str) -> str:
+    return path.split("/", maxsplit=1)[0] if "/" in path else "."
 
 
 def _commit_author(repo: Path, commit: str) -> dict[str, str]:
