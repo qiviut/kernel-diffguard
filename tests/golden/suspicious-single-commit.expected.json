@@ -17,6 +17,11 @@
       "id": "high-risk-path"
     }
   ],
+  "kernel_impacts": [
+    {
+      "id": "security-sensitive"
+    }
+  ],
   "review_posture": "review-assistant-not-verdict",
   "schema_version": 1,
   "subject": "Maintenance update",

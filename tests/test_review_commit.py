@@ -75,6 +75,46 @@ def test_review_commit_flags_deterministic_easy_win_findings(tmp_path: Path):
     assert all(finding["evidence"] for finding in result["findings"])
 
 
+def test_review_commit_emits_linux_kernel_impact_hints(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    run_git(repo, "init", "--initial-branch", "main")
+    run_git(repo, "config", "user.name", "Fixture Author")
+    run_git(repo, "config", "user.email", "fixture@example.test")
+
+    (repo / "README.md").write_text("baseline\n")
+    commit_all(repo, "Initial baseline")
+
+    (repo / "drivers" / "net" / "ethernet").mkdir(parents=True)
+    (repo / "drivers" / "net" / "ethernet" / "adapter.c").write_text(
+        "int adapter(void) { return 0; }\n"
+    )
+    (repo / "net" / "ipv4").mkdir(parents=True)
+    (repo / "net" / "ipv4" / "tcp.c").write_text("int tcp_guard(void) { return 0; }\n")
+    (repo / "kernel" / "sched").mkdir(parents=True)
+    (repo / "kernel" / "sched" / "core.c").write_text("int scheduler_guard(void) { return 0; }\n")
+    (repo / "Kconfig").write_text("config TEST\n    bool \"test\"\n")
+    commit = commit_all(repo, "Touch kernel-impact areas")
+
+    result = review_commit(repo, commit)
+
+    impact_ids = {impact["id"] for impact in result["kernel_impacts"]}
+    assert impact_ids >= {"drivers", "networking", "scheduler", "kconfig"}
+    networking = next(impact for impact in result["kernel_impacts"] if impact["id"] == "networking")
+    assert "path:net/ipv4/tcp.c" in networking["evidence"]
+    assert networking["retest_hints"] == [
+        "network protocol smoke tests",
+        "affected driver or socket tests",
+    ]
+    assert all(impact["uncertainty"] == "path-heuristic" for impact in result["kernel_impacts"])
+
+    text = main(["review-commit", "--repo", str(repo), "--commit", commit, "--format", "text"])
+    assert text == 0
+    rendered = capsys.readouterr().out
+    assert "Kernel impact hints:" in rendered
+    assert "networking" in rendered
+
+
 def test_review_commit_cli_emits_json(tmp_path: Path, capsys):
     repo, commit = make_repo_with_suspicious_commit(tmp_path)
 

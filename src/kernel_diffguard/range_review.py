@@ -123,6 +123,7 @@ def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
         "omitted_path_prefix_pairs_after_limit": 0,
     }
     finding_ids: dict[str, int] = {}
+    kernel_impacts: dict[str, int] = {}
     path_prefixes: dict[str, int] = {}
     touched_paths: set[str] = set()
     authors_by_key: dict[tuple[str, str], JsonObject] = {}
@@ -171,6 +172,9 @@ def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
             finding_ids[finding_id] = finding_ids.get(finding_id, 0) + 1
             author_finding_ids = author_entry["finding_ids"]
             author_finding_ids[finding_id] = author_finding_ids.get(finding_id, 0) + 1
+        for impact in commit_review.get("kernel_impacts", []):
+            impact_id = str(impact["id"])
+            kernel_impacts[impact_id] = kernel_impacts.get(impact_id, 0) + 1
 
     return {
         "authors": [
@@ -187,6 +191,7 @@ def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
             co_changed_path_prefix_pairs, "path_prefixes"
         ),
         "finding_ids": dict(sorted(finding_ids.items())),
+        "kernel_impacts": dict(sorted(kernel_impacts.items())),
         "path_prefixes": dict(sorted(path_prefixes.items())),
         "touched_path_count": len(touched_paths),
         "touched_paths": sorted(touched_paths),

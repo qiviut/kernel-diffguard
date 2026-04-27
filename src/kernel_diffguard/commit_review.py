@@ -7,6 +7,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from .kernel_impact import kernel_impacts_for_paths
+
 PROMPT_INJECTION_MARKERS = (
     "ignore previous instructions",
     "disregard previous instructions",
@@ -126,6 +128,7 @@ def review_commit(repo: Path | str, commit: str) -> JsonObject:
         "commit": commit_sha,
         "subject": subject,
         "touched_paths": touched_paths,
+        "kernel_impacts": kernel_impacts_for_paths(touched_paths),
         "findings": findings,
     }
 
@@ -141,6 +144,12 @@ def render_text(review: JsonObject) -> str:
     for finding in findings:
         lines.append(f"- {finding['id']} [{finding['severity']}]: {finding['summary']}")
         lines.append(f"  next: {finding['suggested_next_check']}")
+    impacts = review.get("kernel_impacts", [])
+    if impacts:
+        lines.append("Kernel impact hints:")
+        for impact in impacts:
+            lines.append(f"- {impact['id']}: {impact['summary']}")
+            lines.append(f"  retest: {', '.join(impact['retest_hints'])}")
     return "\n".join(lines)
 
 

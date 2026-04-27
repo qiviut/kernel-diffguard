@@ -19,6 +19,11 @@
           "id": "high-risk-path"
         }
       ],
+      "kernel_impacts": [
+        {
+          "id": "security-sensitive"
+        }
+      ],
       "review_posture": "review-assistant-not-verdict",
       "schema_version": 1,
       "subject": "Maintenance update",
@@ -182,6 +187,9 @@
       "prompt-injection-text": 1,
       "removed-test": 1,
       "suspicious-script-added": 1
+    },
+    "kernel_impacts": {
+      "security-sensitive": 1
     },
     "path_prefixes": {
       ".github": 1,

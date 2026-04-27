@@ -59,6 +59,7 @@ def test_golden_runner_prepares_builtin_suspicious_commit_fixture(tmp_path: Path
                     {"id": "prompt-injection-text"},
                     {"id": "high-risk-path"},
                 ],
+                "kernel_impacts": [{"id": "security-sensitive"}],
             },
             indent=2,
         )
@@ -84,6 +85,7 @@ def test_golden_runner_prepares_builtin_suspicious_commit_fixture(tmp_path: Path
                         "expected": str(expected),
                         "ignore_fields": [
                             "evidence",
+                            "retest_hints",
                             "severity",
                             "summary",
                             "suggested_next_check",

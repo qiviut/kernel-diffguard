@@ -11,3 +11,6 @@ build/
 htmlcov/
 .golden-work/
 tests/.golden-work/
+
+# bv (beads viewer) local config and caches
+.bv/
