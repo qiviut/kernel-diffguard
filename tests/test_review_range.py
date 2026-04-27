@@ -88,6 +88,16 @@ def test_review_range_empty_range_is_explicit(tmp_path: Path):
     assert result["range"]["errors"] == []
     assert result["range_signals"] == {
         "authors": [],
+        "co_change_limits": {
+            "max_emitted_pairs_per_kind": 512,
+            "max_values_per_commit": 64,
+            "omitted_path_pair_commits": 0,
+            "omitted_path_pairs_after_limit": 0,
+            "omitted_path_prefix_pair_commits": 0,
+            "omitted_path_prefix_pairs_after_limit": 0,
+        },
+        "co_changed_path_pairs": [],
+        "co_changed_path_prefix_pairs": [],
         "finding_ids": {},
         "path_prefixes": {},
         "touched_path_count": 0,
@@ -128,10 +138,110 @@ def test_review_range_emits_cumulative_author_and_diff_signals(tmp_path: Path):
                 "path_prefixes": {"kernel": 1},
             },
         ],
+        "co_change_limits": {
+            "max_emitted_pairs_per_kind": 512,
+            "max_values_per_commit": 64,
+            "omitted_path_pair_commits": 0,
+            "omitted_path_pairs_after_limit": 0,
+            "omitted_path_prefix_pair_commits": 0,
+            "omitted_path_prefix_pairs_after_limit": 0,
+        },
+        "co_changed_path_pairs": [],
+        "co_changed_path_prefix_pairs": [],
         "finding_ids": {"high-risk-path": 2},
         "path_prefixes": {"docs": 1, "drivers": 1, "kernel": 1},
         "touched_path_count": 3,
         "touched_paths": ["docs/notes.txt", "drivers/net.c", "kernel/scheduler.c"],
+    }
+
+
+def test_review_range_emits_same_commit_cochange_signals(tmp_path: Path):
+    repo, _base, _first, _second = make_linear_repo(tmp_path)
+
+    (repo / "drivers" / "net.c").write_text("int net_driver(void) { return 2; }\n")
+    (repo / "tests" / "net_test.py").parent.mkdir(exist_ok=True)
+    (repo / "tests" / "net_test.py").write_text("def test_net():\n    assert True\n")
+    first_pair = commit_all(repo, "Update driver with test")
+
+    (repo / "drivers" / "net.c").write_text("int net_driver(void) { return 3; }\n")
+    (repo / "docs" / "notes.txt").write_text("driver notes\n")
+    second_pair = commit_all(repo, "Update driver with docs")
+
+    result = review_commits(repo, commits=[first_pair, second_pair])
+
+    assert result["range_signals"]["co_changed_path_pairs"] == [
+        {
+            "commit_count": 1,
+            "paths": ["docs/notes.txt", "drivers/net.c"],
+        },
+        {
+            "commit_count": 1,
+            "paths": ["drivers/net.c", "tests/net_test.py"],
+        },
+    ]
+    assert result["range_signals"]["co_changed_path_prefix_pairs"] == [
+        {
+            "commit_count": 1,
+            "path_prefixes": ["docs", "drivers"],
+        },
+        {
+            "commit_count": 1,
+            "path_prefixes": ["drivers", "tests"],
+        },
+    ]
+    assert result["range_signals"]["co_change_limits"] == {
+        "max_emitted_pairs_per_kind": 512,
+        "max_values_per_commit": 64,
+        "omitted_path_pair_commits": 0,
+        "omitted_path_pairs_after_limit": 0,
+        "omitted_path_prefix_pair_commits": 0,
+        "omitted_path_prefix_pairs_after_limit": 0,
+    }
+
+
+def test_review_range_bounds_same_commit_cochange_output(tmp_path: Path):
+    repo, _base, _first, _second = make_linear_repo(tmp_path)
+
+    for index in range(65):
+        path = repo / f"area-{index:02d}" / "file.c"
+        path.parent.mkdir()
+        path.write_text(f"int marker_{index}(void) {{ return {index}; }}\n")
+    commit = commit_all(repo, "Large mechanical fanout")
+
+    result = review_commits(repo, commits=[commit])
+
+    assert result["range_signals"]["co_changed_path_pairs"] == []
+    assert result["range_signals"]["co_changed_path_prefix_pairs"] == []
+    assert result["range_signals"]["co_change_limits"] == {
+        "max_emitted_pairs_per_kind": 512,
+        "max_values_per_commit": 64,
+        "omitted_path_pair_commits": 1,
+        "omitted_path_pairs_after_limit": 0,
+        "omitted_path_prefix_pair_commits": 1,
+        "omitted_path_prefix_pairs_after_limit": 0,
+    }
+
+
+def test_review_range_caps_emitted_cochange_pairs(tmp_path: Path):
+    repo, _base, _first, _second = make_linear_repo(tmp_path)
+
+    for index in range(33):
+        path = repo / f"cap-area-{index:02d}" / "file.c"
+        path.parent.mkdir()
+        path.write_text(f"int cap_marker_{index}(void) {{ return {index}; }}\n")
+    commit = commit_all(repo, "Large but pairable fanout")
+
+    result = review_commits(repo, commits=[commit])
+
+    assert len(result["range_signals"]["co_changed_path_pairs"]) == 512
+    assert len(result["range_signals"]["co_changed_path_prefix_pairs"]) == 512
+    assert result["range_signals"]["co_change_limits"] == {
+        "max_emitted_pairs_per_kind": 512,
+        "max_values_per_commit": 64,
+        "omitted_path_pair_commits": 0,
+        "omitted_path_pairs_after_limit": 16,
+        "omitted_path_prefix_pair_commits": 0,
+        "omitted_path_prefix_pairs_after_limit": 16,
     }
 
 

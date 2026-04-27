@@ -12,6 +12,9 @@ from .commit_review import review_commit
 
 JsonObject = dict[str, Any]
 
+MAX_COCHANGE_VALUES_PER_COMMIT = 64
+MAX_EMITTED_COCHANGE_PAIRS_PER_KIND = 512
+
 
 @dataclass(frozen=True)
 class RangeReviewError(Exception):
@@ -109,6 +112,16 @@ def _review_commit_sequence(
 
 
 def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
+    co_changed_path_pairs: dict[tuple[str, str], int] = {}
+    co_changed_path_prefix_pairs: dict[tuple[str, str], int] = {}
+    co_change_limits = {
+        "max_emitted_pairs_per_kind": MAX_EMITTED_COCHANGE_PAIRS_PER_KIND,
+        "max_values_per_commit": MAX_COCHANGE_VALUES_PER_COMMIT,
+        "omitted_path_pair_commits": 0,
+        "omitted_path_pairs_after_limit": 0,
+        "omitted_path_prefix_pair_commits": 0,
+        "omitted_path_prefix_pairs_after_limit": 0,
+    }
     finding_ids: dict[str, int] = {}
     path_prefixes: dict[str, int] = {}
     touched_paths: set[str] = set()
@@ -132,8 +145,22 @@ def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
         author_entry["commit_count"] += 1
         author_entry["commits"].append(commit)
 
-        for path in commit_review.get("touched_paths", []):
-            path_text = str(path)
+        commit_paths = sorted({str(path) for path in commit_review.get("touched_paths", [])})
+        path_omitted_commit, path_omitted_pairs = _increment_pair_counts(
+            co_changed_path_pairs, commit_paths
+        )
+        prefix_omitted_commit, prefix_omitted_pairs = _increment_pair_counts(
+            co_changed_path_prefix_pairs,
+            sorted({_path_prefix(path) for path in commit_paths}),
+        )
+        if path_omitted_commit:
+            co_change_limits["omitted_path_pair_commits"] += 1
+        if prefix_omitted_commit:
+            co_change_limits["omitted_path_prefix_pair_commits"] += 1
+        co_change_limits["omitted_path_pairs_after_limit"] += path_omitted_pairs
+        co_change_limits["omitted_path_prefix_pairs_after_limit"] += prefix_omitted_pairs
+
+        for path_text in commit_paths:
             touched_paths.add(path_text)
             prefix = _path_prefix(path_text)
             path_prefixes[prefix] = path_prefixes.get(prefix, 0) + 1
@@ -154,6 +181,11 @@ def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
             }
             for author in authors_by_key.values()
         ],
+        "co_change_limits": co_change_limits,
+        "co_changed_path_pairs": _pair_signal(co_changed_path_pairs, "paths"),
+        "co_changed_path_prefix_pairs": _pair_signal(
+            co_changed_path_prefix_pairs, "path_prefixes"
+        ),
         "finding_ids": dict(sorted(finding_ids.items())),
         "path_prefixes": dict(sorted(path_prefixes.items())),
         "touched_path_count": len(touched_paths),
@@ -163,6 +195,33 @@ def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
 
 def _path_prefix(path: str) -> str:
     return path.split("/", maxsplit=1)[0] if "/" in path else "."
+
+
+def _increment_pair_counts(
+    pair_counts: dict[tuple[str, str], int], values: list[str]
+) -> tuple[bool, int]:
+    if len(values) > MAX_COCHANGE_VALUES_PER_COMMIT:
+        return True, 0
+
+    omitted_after_limit = 0
+    for left_index, left in enumerate(values):
+        for right in values[left_index + 1 :]:
+            pair = (left, right)
+            if (
+                pair not in pair_counts
+                and len(pair_counts) >= MAX_EMITTED_COCHANGE_PAIRS_PER_KIND
+            ):
+                omitted_after_limit += 1
+                continue
+            pair_counts[pair] = pair_counts.get(pair, 0) + 1
+    return False, omitted_after_limit
+
+
+def _pair_signal(pair_counts: dict[tuple[str, str], int], pair_key: str) -> list[JsonObject]:
+    return [
+        {"commit_count": count, pair_key: [left, right]}
+        for (left, right), count in sorted(pair_counts.items())
+    ]
 
 
 def _commit_author(repo: Path, commit: str) -> dict[str, str]:

@@ -40,6 +40,6 @@ Early CLI and regression skeleton are in place. The current deterministic review
 - review an explicit ordered commit list with `kdiffguard review-range --repo PATH --commit SHA --commit SHA --format json|text`, and
 - run golden analysis regression cases with `scripts/run-golden-analysis.sh`.
 
-Range JSON includes cumulative `range_signals`: stable author buckets, finding-id counts, top-level path-prefix counts, and touched-path summaries across the reviewed span. This is intentionally first-class evidence for X→Y review rather than just a pile of individual commit reports.
+Range JSON includes cumulative `range_signals`: stable author buckets, finding-id counts, top-level path-prefix counts, bounded same-commit co-changed path/prefix pairs, and touched-path summaries across the reviewed span. Co-change pairs are range-local evidence, not longitudinal baselines yet; they are capped and include omission counters under `co_change_limits` so hostile or mechanical fanout commits cannot produce unbounded output. This is intentionally first-class evidence for X→Y review rather than just a pile of individual commit reports.
 
 Current findings are intentionally simple reviewer-assistance signals, not verdicts: removed tests, CI/static-analysis changes, suspicious script additions, prompt-injection-like text, and high-risk kernel/build paths. See `docs/architecture.md` and `docs/roadmap.md` for the starting design.

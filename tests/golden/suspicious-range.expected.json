@@ -80,6 +80,102 @@
         }
       }
     ],
+    "co_change_limits": {
+      "max_emitted_pairs_per_kind": 512,
+      "max_values_per_commit": 64,
+      "omitted_path_pair_commits": 0,
+      "omitted_path_pairs_after_limit": 0,
+      "omitted_path_prefix_pair_commits": 0,
+      "omitted_path_prefix_pairs_after_limit": 0
+    },
+    "co_changed_path_pairs": [
+      {
+        "commit_count": 1,
+        "paths": [
+          ".github/workflows/ci.yml",
+          "scripts/update.sh"
+        ]
+      },
+      {
+        "commit_count": 1,
+        "paths": [
+          ".github/workflows/ci.yml",
+          "security/backdoor.c"
+        ]
+      },
+      {
+        "commit_count": 1,
+        "paths": [
+          ".github/workflows/ci.yml",
+          "tests/test_guard.py"
+        ]
+      },
+      {
+        "commit_count": 1,
+        "paths": [
+          "scripts/update.sh",
+          "security/backdoor.c"
+        ]
+      },
+      {
+        "commit_count": 1,
+        "paths": [
+          "scripts/update.sh",
+          "tests/test_guard.py"
+        ]
+      },
+      {
+        "commit_count": 1,
+        "paths": [
+          "security/backdoor.c",
+          "tests/test_guard.py"
+        ]
+      }
+    ],
+    "co_changed_path_prefix_pairs": [
+      {
+        "commit_count": 1,
+        "path_prefixes": [
+          ".github",
+          "scripts"
+        ]
+      },
+      {
+        "commit_count": 1,
+        "path_prefixes": [
+          ".github",
+          "security"
+        ]
+      },
+      {
+        "commit_count": 1,
+        "path_prefixes": [
+          ".github",
+          "tests"
+        ]
+      },
+      {
+        "commit_count": 1,
+        "path_prefixes": [
+          "scripts",
+          "security"
+        ]
+      },
+      {
+        "commit_count": 1,
+        "path_prefixes": [
+          "scripts",
+          "tests"
+        ]
+      },
+      {
+        "commit_count": 1,
+        "path_prefixes": [
+          "security",
+          "tests"
+        ]
+      }
+    ],
     "finding_ids": {
       "ci-static-analysis-weakened": 1,
       "high-risk-path": 1,
