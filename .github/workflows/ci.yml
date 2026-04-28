@@ -30,6 +30,8 @@ jobs:
         run: pytest -q
       - name: Run golden analysis regression cases
         run: scripts/run-golden-analysis.sh
+      - name: Run review-signal scorecard
+        run: scripts/run-scorecard.sh
       - name: Run lint
         run: ruff check .
       - name: Run type checks

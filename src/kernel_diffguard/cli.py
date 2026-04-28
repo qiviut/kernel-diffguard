@@ -20,6 +20,9 @@ from .range_review import (
 from .range_review import (
     render_text as render_range_text,
 )
+from .scorecard import build_scorecard
+from .scorecard import render_json as render_scorecard_json
+from .scorecard import render_text as render_scorecard_text
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -74,6 +77,16 @@ def build_parser() -> argparse.ArgumentParser:
         default="text",
         help="output format",
     )
+    scorecard_parser = subparsers.add_parser(
+        "scorecard",
+        help="emit deterministic review-signal value metrics",
+    )
+    scorecard_parser.add_argument(
+        "--format",
+        choices=("json", "text"),
+        default="text",
+        help="output format",
+    )
     return parser
 
 
@@ -111,6 +124,13 @@ def main(argv: list[str] | None = None) -> int:
             print(render_range_json(review), end="")
         else:
             print(render_range_text(review))
+        return 0
+    if args.command == "scorecard":
+        scorecard = build_scorecard(".")
+        if args.format == "json":
+            print(render_scorecard_json(scorecard), end="")
+        else:
+            print(render_scorecard_text(scorecard))
         return 0
     parser.print_help()
     return 0

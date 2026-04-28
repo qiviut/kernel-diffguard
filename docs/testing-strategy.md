@@ -126,4 +126,6 @@ Each implementation iteration should improve at least one observable dimension u
 
 The future review-signal scorecard should report these counts deterministically in CI. Until then, commits and Beads notes should say which observable reviewer signal, parser capability, or evidence traceability improvement was added.
 
+The initial scorecard is available with `kdiffguard scorecard --format json|text` and is run in CI by `scripts/run-scorecard.sh`. Metrics are steering signals, not product success claims.
+
 This prevents infrastructure-only drift and keeps the project focused on sharper human review rather than coverage theater.
