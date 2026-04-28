@@ -32,14 +32,18 @@ The Linux kernel is the first exemplar because it has scale, subsystem structure
    - Must explain features, not emit opaque scores alone.
 7. Discussion/context correlator
    - Searches mailing-list archives and public review systems for patch discussion, vN series history, review tags, objections, and maintainer context.
-8. Review packet generator
-   - Emits a concise packet containing facts, links, uncertainties, retest guidance, and suggested next checks.
+8. External evidence snapshot ingester
+   - Consumes local, bounded snapshots from OpenSSF-adjacent providers such as Scorecard, SLSA, Sigstore, OSV, OpenVEX, GUAC/Trustify, Security Insights, Criticality Score, and Package Analysis-style baselines.
+   - Keeps review commands offline by default and treats provider output as evidence, not verdicts.
+9. Review packet generator
+   - Emits a concise packet containing facts, links, uncertainties, retest guidance, external evidence references, and suggested next checks.
 
 ## Boundaries and trust zones
 
 - Hostile input: git repository contents, commit metadata, emails, web pages, patches, logs, binaries, generated files.
 - Hostile remote input: GitHub PR titles, descriptions, comments, labels, branch names, user/profile fields, API metadata, rendered HTML, and downloadable patches.
-- Deterministic low-privilege zone: parsers, reducers, hashing, object inspection, and schema normalization.
+- Hostile external evidence: OpenSSF/provider snapshots, SBOM/advisory/provenance/signature metadata, provider scores, graph records, and vulnerability/exploitability statements.
+- Deterministic low-privilege zone: parsers, reducers, hashing, object inspection, snapshot loading, and schema normalization.
 - Heuristic/model-assisted zone: summarization, anomaly explanation, semantic patch review. This zone receives reduced evidence, not raw unbounded hostile input by default.
 - Human decision zone: final trust and release decisions remain explicit human/organization policy decisions.
 
@@ -66,7 +70,8 @@ The Linux kernel is the first exemplar because it has scale, subsystem structure
 3. Impact analyzer maps paths and diff features to subsystem and retest hints.
 4. Complexity analyzer classifies review difficulty.
 5. Context correlator searches for public discussion.
-6. Review packet generator emits the result.
+6. Optional external evidence snapshots add project posture, provenance, advisory, exploitability, graph, or criticality context without live network access.
+7. Review packet generator emits the result.
 
 ### Tree/binary injection analysis
 

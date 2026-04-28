@@ -31,6 +31,13 @@
 - Fail with a human-readable diff when stable findings change.
 - Treat changed output as either a regression to fix or an intentional analysis improvement that requires updating the golden result with rationale.
 
+## Milestone 2.7: external evidence snapshot model
+
+- Define a local snapshot schema for OpenSSF-aligned external evidence before live integrations become sticky.
+- Treat OpenSSF Scorecard, SLSA, Sigstore, OSV, OpenVEX, GUAC/Trustify, Security Insights, Criticality Score, and Package Analysis-style baselines as evidence providers, not verdict engines.
+- Keep `review-commit` and `review-range` offline by default; live provider collection belongs in explicit collector commands or external tooling.
+- Add synthetic golden fixtures proving external claims can be loaded, bounded, cited, and rendered deterministically.
+
 ## Milestone 3: Linux-kernel impact hints
 
 - Map touched paths to kernel subsystems and maintainers where practical.
