@@ -83,6 +83,7 @@ The Linux kernel is the first exemplar because it has scale, subsystem structure
 
 Early evidence should include:
 
+- official interface references for Git plumbing/formats, Python packaging/typing, public-inbox/lore, and Linux kernel process docs,
 - reproducible tests for git and GitHub input parsing,
 - golden fixtures for tricky histories,
 - explicit hostile-input fixtures,

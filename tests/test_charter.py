@@ -87,3 +87,40 @@ def test_external_evidence_design_covers_openssf_snapshot_boundaries():
 
     assert "not verdicts" in design
     assert "no live network" in design
+
+
+def test_official_interface_research_covers_version_sensitive_sources():
+    research = Path("docs/official-interface-research.md").read_text(encoding="utf-8")
+
+    required_sections = [
+        "## Goal / problem framing",
+        "## Official references",
+        "## Interface decisions",
+        "## Version-sensitive behavior",
+        "## Alternatives and deferrals",
+        "## Downstream beads",
+    ]
+    for section in required_sections:
+        assert section in research
+
+    required_terms = [
+        "git-scm.com/docs",
+        "git rev-list",
+        "git diff-tree",
+        "git cat-file",
+        "git rev-parse",
+        "pyproject.toml",
+        "typing.python.org",
+        "public-inbox",
+        "lore.kernel.org",
+        "docs.kernel.org/process",
+        "Signed-off-by",
+        "Fixes:",
+        "offline by default",
+        "hostile input",
+    ]
+    for term in required_terms:
+        assert term in research
+
+    assert "Git 2.51.0" in research
+    assert "Python 3.13.7" in research

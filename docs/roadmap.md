@@ -7,6 +7,12 @@
 - Initial architecture and roadmap docs.
 - Minimal tested Python package and CLI placeholder.
 
+## Milestone 0.5: official interface research
+
+- Capture current official Git, Python packaging/typing, public-inbox/lore, and Linux kernel process references before parser and resolver interfaces harden.
+- Prefer Git plumbing commands, explicit separators, immutable revisions, and bounded local snapshots over human output or hidden live network access.
+- Keep version-sensitive behavior visible for Git, Python, lore/public-inbox, and kernel process assumptions.
+
 ## Milestone 1: single-commit reviewer for local and GitHub-hosted commits
 
 - Accept a local repo path plus commit SHA, and later GitHub commit URLs or owner/repo@sha inputs.
