@@ -124,3 +124,35 @@ def test_official_interface_research_covers_version_sensitive_sources():
 
     assert "Git 2.51.0" in research
     assert "Python 3.13.7" in research
+
+
+def test_normalized_evidence_schema_doc_covers_artifacts_and_boundaries():
+    schema_doc = Path("docs/normalized-evidence-schemas.md").read_text(encoding="utf-8")
+
+    required_sections = [
+        "## Goal / problem framing",
+        "## Trust-boundary labels",
+        "## Artifact schemas",
+        "## Validation fixtures",
+        "## Downstream implementation rules",
+    ]
+    for section in required_sections:
+        assert section in schema_doc
+
+    required_terms = [
+        "commit_artifact",
+        "commit_range_manifest",
+        "mailing_list_message_artifact",
+        "related_message_candidate",
+        "finding",
+        "recommendation",
+        "external_evidence_record",
+        "evidence_refs",
+        "trust_boundary",
+        "limits",
+        "risk_hints",
+        "hostile input",
+        "not verdicts",
+    ]
+    for term in required_terms:
+        assert term in schema_doc

@@ -35,7 +35,10 @@ The Linux kernel is the first exemplar because it has scale, subsystem structure
 8. External evidence snapshot ingester
    - Consumes local, bounded snapshots from OpenSSF-adjacent providers such as Scorecard, SLSA, Sigstore, OSV, OpenVEX, GUAC/Trustify, Security Insights, Criticality Score, and Package Analysis-style baselines.
    - Keeps review commands offline by default and treats provider output as evidence, not verdicts.
-9. Review packet generator
+9. Normalized evidence schema catalog
+   - Defines the first compatibility shapes for commit artifacts, commit-range manifests, mailing-list message artifacts, related-message candidates, findings, recommendations, and external evidence records.
+   - Requires evidence references, trust-boundary labels, limits, and risk hints so schema boundaries stay visible as parser and resolver implementation hardens.
+10. Review packet generator
    - Emits a concise packet containing facts, links, uncertainties, retest guidance, external evidence references, and suggested next checks.
 
 ## Boundaries and trust zones

@@ -15,6 +15,7 @@
 
 ## Milestone 1: single-commit reviewer for local and GitHub-hosted commits
 
+- Define normalized evidence schemas and trust-boundary labels for commit artifacts, commit ranges, mailing-list messages, related-message candidates, findings, recommendations, and external evidence records.
 - Accept a local repo path plus commit SHA, and later GitHub commit URLs or owner/repo@sha inputs.
 - Resolve every input to a specific commit and repository identity before analysis.
 - Emit commit metadata, parent/tree IDs, touched paths, diff stats, renames, bounded diff excerpts, and trust-boundary labels as stable JSON.

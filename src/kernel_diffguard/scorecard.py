@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .evidence_schema import build_schema_catalog
+
 JsonObject = dict[str, Any]
 
 SUPPORTED_INPUT_SHAPES = (
@@ -39,6 +41,9 @@ def build_scorecard(project_root: Path | str) -> JsonObject:
     root = Path(project_root)
     golden_cases = _golden_case_names(root / "tests" / "golden" / "manifest.json")
     reviewer_examples = _end_to_end_reviewer_examples(root)
+    schema_catalog = build_schema_catalog()
+    normalized_evidence_artifact_schemas = sorted(schema_catalog["artifacts"])
+    trust_boundary_labels = sorted(schema_catalog["trust_boundary_labels"])
     return {
         "schema_version": 1,
         "review_posture": "metrics-are-steering-signals-not-product-claims",
@@ -49,12 +54,16 @@ def build_scorecard(project_root: Path | str) -> JsonObject:
             "schema_fields_with_evidence_references": len(
                 SCHEMA_FIELDS_WITH_EVIDENCE_REFERENCES
             ),
+            "normalized_evidence_artifact_schemas": len(normalized_evidence_artifact_schemas),
+            "trust_boundary_labels": len(trust_boundary_labels),
             "end_to_end_reviewer_examples": len(reviewer_examples),
         },
         "supported_input_shapes": list(SUPPORTED_INPUT_SHAPES),
         "heuristic_findings": list(HEURISTIC_FINDINGS),
         "golden_cases": golden_cases,
         "schema_fields_with_evidence_references": list(SCHEMA_FIELDS_WITH_EVIDENCE_REFERENCES),
+        "normalized_evidence_artifact_schemas": normalized_evidence_artifact_schemas,
+        "trust_boundary_labels": trust_boundary_labels,
         "end_to_end_reviewer_examples": reviewer_examples,
         "iteration_value_policy": {
             "feature_changes_require_scorecard_delta": True,
@@ -81,6 +90,9 @@ def render_text(scorecard: JsonObject) -> str:
             f"- golden cases: {counts['golden_cases']}",
             "- schema fields with evidence references: "
             f"{counts['schema_fields_with_evidence_references']}",
+            "- normalized evidence artifact schemas: "
+            f"{counts['normalized_evidence_artifact_schemas']}",
+            f"- trust boundary labels: {counts['trust_boundary_labels']}",
             f"- end-to-end reviewer examples: {counts['end_to_end_reviewer_examples']}",
             "- feature changes require a scorecard delta unless they are pure maintenance",
         ]
