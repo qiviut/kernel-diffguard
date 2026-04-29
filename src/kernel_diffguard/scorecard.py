@@ -19,11 +19,13 @@ SUPPORTED_INPUT_SHAPES = (
 
 HEURISTIC_FINDINGS = (
     "ci-static-analysis-weakened",
+    "generated-code-churn",
     "high-risk-path",
     "linux-security-cue",
     "prompt-injection-text",
     "removed-test",
     "suspicious-script-added",
+    "warning-policy-weakened",
 )
 
 SCHEMA_FIELDS_WITH_EVIDENCE_REFERENCES = (

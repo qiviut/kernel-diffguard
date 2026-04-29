@@ -88,6 +88,7 @@ def test_golden_runner_prepares_builtin_suspicious_commit_fixture(tmp_path: Path
                             "evidence",
                             "evidence_refs",
                             "false_positive_caveat",
+                            "optional_check_hooks",
                             "retest_hints",
                             "severity",
                             "summary",
