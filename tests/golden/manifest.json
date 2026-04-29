@@ -18,6 +18,38 @@
       "ignore_fields": [
         "commit_artifact",
         "evidence",
+        "evidence_refs",
+        "false_positive_caveat",
+        "retest_hints",
+        "severity",
+        "summary",
+        "suggested_next_check",
+        "uncertainty"
+      ],
+      "normalize_fields": {
+        "commit": "<commit>"
+      }
+    },
+    {
+      "name": "linux-security-commit",
+      "rationale": "Locks in deterministic Linux security-cue review hints for CVE/XSA/trailer/security-language metadata without claiming a verdict.",
+      "fixture": "linux_security_commit",
+      "command": [
+        "kdiffguard",
+        "review-commit",
+        "--repo",
+        "{repo}",
+        "--commit",
+        "HEAD",
+        "--format",
+        "json"
+      ],
+      "expected": "linux-security-commit.expected.json",
+      "ignore_fields": [
+        "commit_artifact",
+        "evidence",
+        "evidence_refs",
+        "false_positive_caveat",
         "retest_hints",
         "severity",
         "summary",
@@ -49,6 +81,7 @@
         "commit_artifact",
         "evidence",
         "evidence_refs",
+        "false_positive_caveat",
         "retest_hints",
         "severity",
         "summary",

@@ -177,9 +177,13 @@ def test_review_merge_commit_expands_introduced_child_commits(tmp_path: Path):
         risky_child,
         benign_child,
     ]
-    assert result["findings_by_commit"][risky_child][0]["id"] == "high-risk-path"
+    risky_finding_ids = {finding["id"] for finding in result["findings_by_commit"][risky_child]}
+    assert risky_finding_ids >= {"linux-security-cue", "high-risk-path"}
     assert result["findings_by_commit"][benign_child] == []
-    assert result["range_signals"]["finding_ids"] == {"high-risk-path": 2}
+    assert result["range_signals"]["finding_ids"] == {
+        "high-risk-path": 2,
+        "linux-security-cue": 1,
+    }
     assert "drivers/xen/privcmd.c" in result["range_signals"]["touched_paths"]
 
 

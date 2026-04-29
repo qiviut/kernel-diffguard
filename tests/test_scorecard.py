@@ -14,12 +14,12 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
     assert scorecard["review_posture"] == "metrics-are-steering-signals-not-product-claims"
     assert scorecard["counts"] == {
         "supported_input_shapes": 4,
-        "heuristic_findings": 5,
-        "golden_cases": 2,
+        "heuristic_findings": 6,
+        "golden_cases": 3,
         "schema_fields_with_evidence_references": 7,
         "normalized_evidence_artifact_schemas": 7,
         "trust_boundary_labels": 5,
-        "end_to_end_reviewer_examples": 2,
+        "end_to_end_reviewer_examples": 3,
     }
     assert scorecard["normalized_evidence_artifact_schemas"] == [
         "commit_artifact",
@@ -51,11 +51,16 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
     assert scorecard["heuristic_findings"] == [
         "ci-static-analysis-weakened",
         "high-risk-path",
+        "linux-security-cue",
         "prompt-injection-text",
         "removed-test",
         "suspicious-script-added",
     ]
-    assert scorecard["golden_cases"] == ["suspicious-range", "suspicious-single-commit"]
+    assert scorecard["golden_cases"] == [
+        "linux-security-commit",
+        "suspicious-range",
+        "suspicious-single-commit",
+    ]
 
 
 def test_scorecard_renderers_are_deterministic_and_human_readable():
@@ -68,8 +73,8 @@ def test_scorecard_renderers_are_deterministic_and_human_readable():
     text = render_text(scorecard)
     assert "Review-signal scorecard" in text
     assert "supported input shapes: 4" in text
-    assert "heuristic findings: 5" in text
-    assert "golden cases: 2" in text
+    assert "heuristic findings: 6" in text
+    assert "golden cases: 3" in text
     assert "normalized evidence artifact schemas: 7" in text
     assert "trust boundary labels: 5" in text
     assert "feature changes require a scorecard delta" in text
@@ -78,9 +83,9 @@ def test_scorecard_renderers_are_deterministic_and_human_readable():
 def test_scorecard_cli_emits_json_and_text(capsys):
     assert main(["scorecard", "--format", "json"]) == 0
     json_output = capsys.readouterr().out
-    assert json.loads(json_output)["counts"]["golden_cases"] == 2
+    assert json.loads(json_output)["counts"]["golden_cases"] == 3
 
     assert main(["scorecard", "--format", "text"]) == 0
     text_output = capsys.readouterr().out
     assert "Review-signal scorecard" in text_output
-    assert "golden cases: 2" in text_output
+    assert "golden cases: 3" in text_output

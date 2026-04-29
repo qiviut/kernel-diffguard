@@ -1,0 +1,22 @@
+{
+  "commit": "<commit>",
+  "findings": [
+    {
+      "id": "linux-security-cue"
+    },
+    {
+      "id": "high-risk-path"
+    }
+  ],
+  "kernel_impacts": [
+    {
+      "id": "drivers"
+    }
+  ],
+  "review_posture": "review-assistant-not-verdict",
+  "schema_version": 1,
+  "subject": "xen/privcmd: fix double-free in VMA split",
+  "touched_paths": [
+    "drivers/xen/privcmd.c"
+  ]
+}

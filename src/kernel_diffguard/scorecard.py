@@ -20,6 +20,7 @@ SUPPORTED_INPUT_SHAPES = (
 HEURISTIC_FINDINGS = (
     "ci-static-analysis-weakened",
     "high-risk-path",
+    "linux-security-cue",
     "prompt-injection-text",
     "removed-test",
     "suspicious-script-added",

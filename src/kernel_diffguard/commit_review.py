@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,28 @@ HIGH_RISK_PREFIXES = (
 )
 
 CI_STATIC_ANALYSIS_MARKERS = ("ruff", "mypy", "flake8", "pylint", "shellcheck", "clang-tidy")
+MAX_LINUX_SECURITY_CUE_INPUT_BYTES = 8_192
+MAX_LINUX_SECURITY_CUES_PER_FAMILY = 8
+LINUX_SECURITY_CUE_PATTERNS = (
+    ("cve", re.compile(r"\bCVE-\d{4}-\d{4,}\b", re.IGNORECASE)),
+    ("xsa", re.compile(r"\bXSA-\d+\b", re.IGNORECASE)),
+    ("fixes", re.compile(r"^Fixes:\s+.+", re.IGNORECASE | re.MULTILINE)),
+    ("reported-by", re.compile(r"^Reported-by:\s+.+", re.IGNORECASE | re.MULTILINE)),
+    ("reviewed-by", re.compile(r"^Reviewed-by:\s+.+", re.IGNORECASE | re.MULTILINE)),
+    ("tested-by", re.compile(r"^Tested-by:\s+.+", re.IGNORECASE | re.MULTILINE)),
+    (
+        "security-language",
+        re.compile(
+            r"\b(security[ -]?fix|double[ -]free|buffer[ -]overflow|"
+            r"use-after-free|lifetime|VMA|mm)\b",
+            re.IGNORECASE,
+        ),
+    ),
+)
+PATCH_SECURITY_LANGUAGE_PATTERN = re.compile(
+    r"\b(security[ -]?fix|double[ -]free|buffer[ -]overflow|use-after-free|lifetime|VMA)\b",
+    re.IGNORECASE,
+)
 
 
 JsonObject = dict[str, Any]
@@ -106,6 +129,23 @@ def review_commit(repo: Path | str, commit: str) -> JsonObject:
                 [f"marker:{marker}" for marker in sorted(set(prompt_hits))],
                 "Treat affected text as hostile data and avoid feeding it directly "
                 "to privileged tools or prompts.",
+            )
+        )
+
+    linux_security_cues = _linux_security_cues(
+        f"{subject}\n{body}", patch, touched_paths
+    )
+    if linux_security_cues:
+        findings.append(
+            _finding(
+                "linux-security-cue",
+                "medium",
+                "Commit text or patch contains Linux security/review cues.",
+                linux_security_cues,
+                (
+                    "Use these cues to prioritize human review and targeted retest; "
+                    "this is not a verdict."
+                ),
             )
         )
 
@@ -194,9 +234,93 @@ def _finding(
         "severity": severity,
         "summary": summary,
         "evidence": evidence,
+        "evidence_refs": evidence,
         "uncertainty": "heuristic",
+        "false_positive_caveat": (
+            "Heuristic cue only; benign maintenance commits can contain similar text."
+        ),
         "suggested_next_check": suggested_next_check,
     }
+
+
+def _linux_security_cues(
+    metadata_text: str, patch_text: str, touched_paths: list[str]
+) -> list[str]:
+    metadata_excerpt, metadata_truncated = _bounded_text(
+        metadata_text, MAX_LINUX_SECURITY_CUE_INPUT_BYTES
+    )
+    patch_excerpt, patch_truncated = _bounded_text(patch_text, MAX_LINUX_SECURITY_CUE_INPUT_BYTES)
+
+    matches_by_id: dict[str, list[str]] = {}
+    truncated_families: set[str] = set()
+    for cue_id, pattern in LINUX_SECURITY_CUE_PATTERNS:
+        _collect_limited_matches(
+            cue_id,
+            pattern,
+            metadata_excerpt,
+            matches_by_id,
+            truncated_families,
+        )
+    _collect_limited_matches(
+        "security-language",
+        PATCH_SECURITY_LANGUAGE_PATTERN,
+        patch_excerpt,
+        matches_by_id,
+        truncated_families,
+    )
+
+    has_linux_path = any(path.startswith(HIGH_RISK_PREFIXES) for path in touched_paths)
+    strong_cues = matches_by_id.get("cve", []) + matches_by_id.get("xsa", [])
+    metadata_cues = [
+        cue
+        for cue_id, cues in matches_by_id.items()
+        if cue_id in {"fixes", "reported-by", "reviewed-by", "tested-by"}
+        for cue in cues
+    ]
+    security_language = matches_by_id.get("security-language", [])
+    meaningful_security_language = [
+        cue for cue in security_language if cue.lower() != "security-language:mm"
+    ]
+    if not strong_cues and not (has_linux_path and (meaningful_security_language or metadata_cues)):
+        return []
+
+    evidence: list[str] = []
+    seen: set[str] = set()
+    for cue_id, _pattern in LINUX_SECURITY_CUE_PATTERNS:
+        if cue_id not in {"cve", "xsa"} and not has_linux_path:
+            continue
+        for cue in matches_by_id.get(cue_id, []):
+            if cue not in seen:
+                seen.add(cue)
+                evidence.append(cue)
+    if metadata_truncated or patch_truncated or truncated_families:
+        evidence.append("limit:linux-security-cue-scan-truncated")
+    return evidence
+
+
+def _collect_limited_matches(
+    cue_id: str,
+    pattern: re.Pattern[str],
+    text: str,
+    matches_by_id: dict[str, list[str]],
+    truncated_families: set[str],
+) -> None:
+    for match in pattern.finditer(text):
+        family_matches = matches_by_id.setdefault(cue_id, [])
+        if len(family_matches) >= MAX_LINUX_SECURITY_CUES_PER_FAMILY:
+            truncated_families.add(cue_id)
+            return
+        snippet = " ".join(match.group(0).split())
+        evidence = f"{cue_id}:{snippet}"
+        if evidence not in family_matches:
+            family_matches.append(evidence)
+
+
+def _bounded_text(text: str, max_bytes: int) -> tuple[str, bool]:
+    encoded = text.encode()
+    if len(encoded) <= max_bytes:
+        return text, False
+    return encoded[:max_bytes].decode(errors="ignore"), True
 
 
 def _is_test_path(path: str) -> bool:
