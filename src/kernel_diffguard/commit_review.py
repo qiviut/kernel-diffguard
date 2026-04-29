@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from .commit_artifact import parse_commit_artifact
 from .kernel_impact import kernel_impacts_for_paths
 
 PROMPT_INJECTION_MARKERS = (
@@ -38,13 +39,12 @@ def review_commit(repo: Path | str, commit: str) -> JsonObject:
     """Review one git commit and emit deterministic reviewer-assistance findings."""
 
     repo_path = Path(repo)
-    commit_sha = _git(repo_path, "rev-parse", commit).strip()
-    subject = _git(repo_path, "show", "-s", "--format=%s", commit_sha).strip()
-    body = _git(repo_path, "show", "-s", "--format=%B", commit_sha)
-    name_status = _parse_name_status(
-        _git(repo_path, "diff-tree", "--no-commit-id", "--name-status", "-r", commit_sha)
-    )
-    patch = _git(repo_path, "show", "--format=", "--find-renames", commit_sha, "--")
+    commit_artifact = parse_commit_artifact(repo_path, commit)
+    commit_sha = commit_artifact["commit"]
+    subject = commit_artifact["subject"]
+    body = commit_artifact["body"]
+    name_status = commit_artifact["path_changes"]
+    patch = commit_artifact["diff_excerpt"]
 
     findings: list[JsonObject] = []
     touched_paths = sorted({path for entry in name_status for path in entry["paths"]})
@@ -129,6 +129,7 @@ def review_commit(repo: Path | str, commit: str) -> JsonObject:
         "subject": subject,
         "touched_paths": touched_paths,
         "kernel_impacts": kernel_impacts_for_paths(touched_paths),
+        "commit_artifact": commit_artifact,
         "findings": findings,
     }
 

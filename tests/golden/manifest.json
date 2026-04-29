@@ -16,6 +16,7 @@
       ],
       "expected": "suspicious-single-commit.expected.json",
       "ignore_fields": [
+        "commit_artifact",
         "evidence",
         "retest_hints",
         "severity",
@@ -45,6 +46,7 @@
       ],
       "expected": "suspicious-range.expected.json",
       "ignore_fields": [
+        "commit_artifact",
         "evidence",
         "retest_hints",
         "severity",

@@ -84,6 +84,7 @@ def test_golden_runner_prepares_builtin_suspicious_commit_fixture(tmp_path: Path
                         ],
                         "expected": str(expected),
                         "ignore_fields": [
+                            "commit_artifact",
                             "evidence",
                             "retest_hints",
                             "severity",
