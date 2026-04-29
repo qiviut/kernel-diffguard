@@ -49,8 +49,16 @@ def parse_commit_artifact(
             commit_sha,
         )
     )
-    raw_diff = _git(repo_path, "show", "--format=", "--find-renames", commit_sha, "--")
-    diff_excerpt, truncated = _bounded_text(raw_diff, max_diff_excerpt_bytes)
+    diff_excerpt, truncated = _git_bounded(
+        repo_path,
+        max_diff_excerpt_bytes,
+        "show",
+        "--no-ext-diff",
+        "--format=",
+        "--find-renames",
+        commit_sha,
+        "--",
+    )
     touched_paths = sorted({path for change in path_changes for path in change["paths"]})
     risk_hints = ["diff-excerpt-truncated"] if truncated else []
 
@@ -187,6 +195,34 @@ def _bounded_text(text: str, max_bytes: int) -> tuple[str, bool]:
     if len(encoded) <= max_bytes:
         return text, False
     return encoded[:max_bytes].decode(errors="ignore"), True
+
+
+def _git_bounded(repo: Path, max_stdout_bytes: int, *args: str) -> tuple[str, bool]:
+    process = subprocess.Popen(
+        ["git", *args],
+        cwd=repo,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if process.stdout is None:
+        raise RuntimeError("git stdout pipe was not created")
+    kept = process.stdout.read(max_stdout_bytes + 1)
+    truncated = len(kept) > max_stdout_bytes
+    if truncated:
+        process.kill()
+        _stdout_remainder, _stderr = process.communicate()
+        return kept[:max_stdout_bytes].decode(errors="ignore"), True
+
+    stdout_remainder, stderr = process.communicate()
+    output = kept + stdout_remainder
+    if process.returncode != 0:
+        raise subprocess.CalledProcessError(
+            process.returncode,
+            ["git", *args],
+            output=output.decode(errors="ignore"),
+            stderr=stderr.decode(errors="ignore"),
+        )
+    return output.decode(errors="ignore"), False
 
 
 def _git(repo: Path, *args: str) -> str:

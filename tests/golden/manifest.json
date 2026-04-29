@@ -48,6 +48,7 @@
       "ignore_fields": [
         "commit_artifact",
         "evidence",
+        "evidence_refs",
         "retest_hints",
         "severity",
         "summary",

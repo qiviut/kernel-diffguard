@@ -14,6 +14,7 @@ SUPPORTED_INPUT_SHAPES = (
     "local single commit",
     "local base-exclusive/target-inclusive range",
     "explicit ordered local commit list",
+    "local merge commit expansion",
 )
 
 HEURISTIC_FINDINGS = (

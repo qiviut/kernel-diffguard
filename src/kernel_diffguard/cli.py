@@ -12,6 +12,7 @@ from .commit_review import review_commit
 from .range_review import (
     RangeReviewError,
     review_commits,
+    review_merge_commit,
     review_range,
 )
 from .range_review import (
@@ -72,6 +73,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="explicit commit SHA or revision to review; may be repeated",
     )
     review_range_parser.add_argument(
+        "--merge-commit",
+        help="merge commit SHA or revision whose introduced commits should be reviewed",
+    )
+    review_range_parser.add_argument(
         "--format",
         choices=("json", "text"),
         default="text",
@@ -106,11 +111,18 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "review-range":
         try:
             if args.commit:
-                if args.base or args.target:
+                if args.base or args.target or args.merge_commit:
                     parser.error(
-                        "review-range accepts either --commit entries or --base/--target, not both"
+                        "review-range accepts either --commit entries, --merge-commit, "
+                        "or --base/--target, not a mix"
                     )
                 review = review_commits(args.repo, commits=args.commit)
+            elif args.merge_commit:
+                if args.base or args.target:
+                    parser.error(
+                        "review-range accepts either --merge-commit or --base/--target, not both"
+                    )
+                review = review_merge_commit(args.repo, merge_commit=args.merge_commit)
             else:
                 if not args.base or not args.target:
                     parser.error(

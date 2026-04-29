@@ -55,11 +55,23 @@
     ]
   },
   "range": {
+    "artifact_type": "commit_range_manifest",
     "base": "<base>",
     "commit_count": 1,
+    "commits": [
+      "<commit>"
+    ],
     "errors": [],
+    "id": "range:base-exclusive-target-inclusive",
+    "limits": {
+      "omitted_record_count": 0,
+      "truncated": false
+    },
+    "risk_hints": [],
+    "schema_version": 1,
     "target": "<target>",
-    "traversal": "base-exclusive-target-inclusive"
+    "traversal": "base-exclusive-target-inclusive",
+    "trust_boundary": "derived_review_signal"
   },
   "range_signals": {
     "authors": [
