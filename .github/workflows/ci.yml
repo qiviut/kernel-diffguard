@@ -19,9 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        # Upstream action: actions/checkout, upstream tag intent: v6.
+        # Refresh intentionally with the procedure in docs/testing-strategy.md.
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - name: Set up Python
-        uses: actions/setup-python@v6
+        # Upstream action: actions/setup-python, upstream tag intent: v6.
+        # Refresh intentionally with the procedure in docs/testing-strategy.md.
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: '3.11'
       - name: Install package with development dependencies

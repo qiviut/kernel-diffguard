@@ -10,10 +10,23 @@ Default GitHub Actions CI should remain deterministic, cheap, and safe for pull 
 
 1. `pytest -q`
 2. `scripts/run-golden-analysis.sh`
-3. `ruff check .`
-4. `mypy src`
+3. `scripts/run-scorecard.sh`
+4. `ruff check .`
+5. `mypy src`
 
 Default CI must use no network, no real Linux kernel checkout, no live GitHub API calls, and no lore.kernel.org requests. Network-backed smoke checks belong in separate manual or scheduled workflows.
+
+### GitHub Actions pin refresh procedure
+
+Workflow action refs are supply-chain inputs. Trusted workflows pin official actions to full commit SHAs while keeping a nearby comment with the upstream tag intent. Refresh those pins deliberately instead of returning to floating tags:
+
+1. Before changing a pin, review upstream release notes and changelogs for the intended tag.
+2. Resolve the intended upstream tag to a full commit SHA:
+   - `git ls-remote https://github.com/actions/checkout.git refs/tags/v6`
+   - `git ls-remote https://github.com/actions/setup-python.git refs/tags/v6`
+3. Replace only the SHA portion of the corresponding `uses:` line in `.github/workflows/ci.yml`; keep the `upstream tag intent: v6` comment accurate if the intended major tag changes.
+4. Validate that every `uses:` ref in trusted workflows is still a 40-character lowercase hex SHA, then run the local CI-equivalent gates: `python -m pytest -q`, `scripts/run-golden-analysis.sh`, `scripts/run-scorecard.sh`, `ruff check .`, and `mypy src`.
+5. If `actionlint` is available locally, run it before committing the workflow change.
 
 ## Source-review fixture pyramid
 

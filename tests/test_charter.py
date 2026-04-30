@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from kernel_diffguard.charter import AnalysisGoal, default_goals, summarize_goals
@@ -52,6 +53,23 @@ def test_testing_strategy_covers_fixture_pyramid_and_iteration_value():
     assert "observable reviewer signal" in strategy
     assert "parser capability" in strategy
     assert "evidence traceability" in strategy
+
+
+def test_ci_workflow_pins_github_actions_by_full_sha_with_update_intent():
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    strategy = Path("docs/testing-strategy.md").read_text(encoding="utf-8")
+
+    uses_refs = re.findall(r"uses:\s+([^\s#]+)", workflow)
+    assert uses_refs
+    for action_ref in uses_refs:
+        owner_repo, ref = action_ref.rsplit("@", 1)
+        assert owner_repo.startswith("actions/")
+        assert re.fullmatch(r"[0-9a-f]{40}", ref), action_ref
+
+    assert "upstream tag intent: v6" in workflow
+    assert "git ls-remote https://github.com/actions/checkout.git refs/tags/v6" in strategy
+    assert "git ls-remote https://github.com/actions/setup-python.git refs/tags/v6" in strategy
+    assert "review upstream release notes" in strategy
 
 
 def test_external_evidence_design_covers_openssf_snapshot_boundaries():
