@@ -62,6 +62,7 @@ def test_schema_fixture_validation_accepts_representative_artifacts():
                 "artifact_type": "mailing_list_message_artifact",
                 "id": "message:<id@example.test>",
                 "message_id": "<id@example.test>",
+                "source_sha256": "0" * 64,
                 "subject": "[PATCH] guard fix",
                 "from": "Fixture Author <fixture@example.test>",
                 "plain_text_excerpt": "bounded hostile email text",

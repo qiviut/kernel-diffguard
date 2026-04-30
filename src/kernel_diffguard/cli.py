@@ -9,6 +9,8 @@ from .charter import summarize_goals
 from .commit_review import render_json as render_commit_json
 from .commit_review import render_text as render_commit_text
 from .commit_review import review_commit
+from .mailing_list import parse_mailing_list_message_file
+from .mailing_list import render_json as render_message_json
 from .range_review import (
     RangeReviewError,
     review_commits,
@@ -82,6 +84,19 @@ def build_parser() -> argparse.ArgumentParser:
         default="text",
         help="output format",
     )
+    parse_message_parser = subparsers.add_parser(
+        "parse-message",
+        help="parse one RFC822 or mbox mailing-list message into normalized facts",
+    )
+    parse_message_parser.add_argument(
+        "--file", required=True, help="path to a local RFC822/mbox message file"
+    )
+    parse_message_parser.add_argument(
+        "--format",
+        choices=("json",),
+        default="json",
+        help="output format",
+    )
     scorecard_parser = subparsers.add_parser(
         "scorecard",
         help="emit deterministic review-signal value metrics",
@@ -136,6 +151,10 @@ def main(argv: list[str] | None = None) -> int:
             print(render_range_json(review), end="")
         else:
             print(render_range_text(review))
+        return 0
+    if args.command == "parse-message":
+        artifact = parse_mailing_list_message_file(args.file)
+        print(render_message_json(artifact), end="")
         return 0
     if args.command == "scorecard":
         scorecard = build_scorecard(".")

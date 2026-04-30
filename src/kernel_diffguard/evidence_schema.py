@@ -49,6 +49,7 @@ ARTIFACT_SCHEMAS: dict[str, JsonObject] = {
         "required_fields": [
             *_COMMON_REQUIRED_FIELDS,
             "message_id",
+            "source_sha256",
             "subject",
             "from",
             "plain_text_excerpt",

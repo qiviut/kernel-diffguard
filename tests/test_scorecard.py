@@ -13,8 +13,8 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
     assert scorecard["schema_version"] == 1
     assert scorecard["review_posture"] == "metrics-are-steering-signals-not-product-claims"
     assert scorecard["counts"] == {
-        "supported_input_shapes": 4,
-        "heuristic_findings": 8,
+        "supported_input_shapes": 5,
+        "heuristic_findings": 13,
         "golden_cases": 3,
         "schema_fields_with_evidence_references": 7,
         "normalized_evidence_artifact_schemas": 7,
@@ -47,15 +47,21 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "local base-exclusive/target-inclusive range",
         "explicit ordered local commit list",
         "local merge commit expansion",
+        "single RFC822/mbox mailing-list message",
     ]
     assert scorecard["heuristic_findings"] == [
+        "body-excerpt-truncated",
         "ci-static-analysis-weakened",
+        "executable-looking-snippet",
         "generated-code-churn",
         "high-risk-path",
+        "hostile-instruction-language",
         "linux-security-cue",
+        "patch-content-present",
         "prompt-injection-text",
         "removed-test",
         "suspicious-script-added",
+        "url-present",
         "warning-policy-weakened",
     ]
     assert scorecard["golden_cases"] == [
@@ -74,8 +80,8 @@ def test_scorecard_renderers_are_deterministic_and_human_readable():
 
     text = render_text(scorecard)
     assert "Review-signal scorecard" in text
-    assert "supported input shapes: 4" in text
-    assert "heuristic findings: 8" in text
+    assert "supported input shapes: 5" in text
+    assert "heuristic findings: 13" in text
     assert "golden cases: 3" in text
     assert "normalized evidence artifact schemas: 7" in text
     assert "trust boundary labels: 5" in text

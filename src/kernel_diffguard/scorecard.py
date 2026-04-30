@@ -15,16 +15,22 @@ SUPPORTED_INPUT_SHAPES = (
     "local base-exclusive/target-inclusive range",
     "explicit ordered local commit list",
     "local merge commit expansion",
+    "single RFC822/mbox mailing-list message",
 )
 
 HEURISTIC_FINDINGS = (
+    "body-excerpt-truncated",
     "ci-static-analysis-weakened",
+    "executable-looking-snippet",
     "generated-code-churn",
     "high-risk-path",
+    "hostile-instruction-language",
     "linux-security-cue",
+    "patch-content-present",
     "prompt-injection-text",
     "removed-test",
     "suspicious-script-added",
+    "url-present",
     "warning-policy-weakened",
 )
 
