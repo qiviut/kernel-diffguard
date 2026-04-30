@@ -57,7 +57,88 @@
   "range": {
     "artifact_type": "commit_range_manifest",
     "base": "<base>",
+    "commit_artifact_refs": [
+      "commit:fd87052a670a9c517eb85a14b57ff9abafa2b842"
+    ],
     "commit_count": 1,
+    "commit_facts": [
+      {
+        "author": {
+          "email": "golden@example.test",
+          "name": "Golden Fixture",
+          "timestamp": "2024-01-01T00:00:00Z"
+        },
+        "commit": "<commit>",
+        "committer": {
+          "email": "golden@example.test",
+          "name": "Golden Fixture",
+          "timestamp": "2024-01-01T00:00:00Z"
+        },
+        "diff_stats": [
+          {
+            "additions": 0,
+            "deletions": 1,
+            "path": ".github/workflows/ci.yml"
+          },
+          {
+            "additions": 2,
+            "deletions": 0,
+            "path": "scripts/update.sh"
+          },
+          {
+            "additions": 1,
+            "deletions": 0,
+            "path": "security/backdoor.c"
+          },
+          {
+            "additions": 0,
+            "deletions": 2,
+            "path": "tests/test_guard.py"
+          }
+        ],
+        "path_changes": [
+          {
+            "paths": [
+              ".github/workflows/ci.yml"
+            ],
+            "score": null,
+            "status": "M"
+          },
+          {
+            "paths": [
+              "scripts/update.sh"
+            ],
+            "score": null,
+            "status": "A"
+          },
+          {
+            "paths": [
+              "security/backdoor.c"
+            ],
+            "score": null,
+            "status": "A"
+          },
+          {
+            "paths": [
+              "tests/test_guard.py"
+            ],
+            "score": null,
+            "status": "D"
+          }
+        ],
+        "signature": {
+          "status": "unsigned-or-unverified",
+          "verified": false
+        },
+        "tags": [],
+        "touched_paths": [
+          ".github/workflows/ci.yml",
+          "scripts/update.sh",
+          "security/backdoor.c",
+          "tests/test_guard.py"
+        ]
+      }
+    ],
     "commits": [
       "<commit>"
     ],

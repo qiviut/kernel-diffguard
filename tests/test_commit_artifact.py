@@ -92,6 +92,9 @@ def test_parse_commit_artifact_emits_normalized_hostile_git_facts(tmp_path: Path
         "omitted_record_count": 0,
         "max_diff_excerpt_bytes": 2000,
         "diff_excerpt_bytes": len(artifact["diff_excerpt"].encode()),
+        "max_tag_records": 32,
+        "max_tag_name_bytes": 256,
+        "omitted_tag_record_count": 0,
     }
     assert "src/module.c" in artifact["diff_excerpt"]
     assert validate_schema_fixture({"artifacts": [artifact]}) == []
@@ -151,6 +154,23 @@ def test_parse_commit_artifact_handles_weird_paths_and_empty_commits(tmp_path: P
     assert empty_artifact["diff_stats"] == []
     assert empty_artifact["diff_excerpt"] == ""
     assert empty_artifact["limits"]["truncated"] is False
+
+
+def test_parse_commit_artifact_caps_tag_facts_from_hostile_repos(tmp_path: Path):
+    repo = make_repo(tmp_path)
+    (repo / "README.md").write_text("baseline\n")
+    commit = commit_all(repo, "Initial baseline")
+    for index in range(40):
+        run_git(repo, "tag", f"review-tag-{index:02d}", commit)
+
+    artifact = parse_commit_artifact(repo, commit)
+
+    assert len(artifact["tags"]) == 32
+    assert artifact["tags"][0] == {"name": "review-tag-00", "kind": "tag"}
+    assert artifact["tags"][-1] == {"name": "review-tag-31", "kind": "tag"}
+    assert artifact["limits"]["max_tag_records"] == 32
+    assert artifact["limits"]["omitted_tag_record_count"] == 1
+    assert "tag-facts-truncated" in artifact["risk_hints"]
 
 
 def test_parse_commit_artifact_bounds_large_diff_excerpts_and_preserves_metadata(tmp_path: Path):

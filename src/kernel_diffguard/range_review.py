@@ -154,7 +154,7 @@ def _review_commit_sequence(
 ) -> JsonObject:
     commit_reviews = [review_commit(repo, commit) for commit in commits]
     signal_reviews = [*commit_reviews, *(supplemental_reviews or [])]
-    range_manifest = _range_manifest(range_metadata, traversal, commits)
+    range_manifest = _range_manifest(range_metadata, traversal, commit_reviews)
     review = {
         "schema_version": 1,
         "review_posture": "review-assistant-not-verdict",
@@ -171,10 +171,11 @@ def _review_commit_sequence(
 
 
 def _range_manifest(
-    range_metadata: dict[str, Any], traversal: str, commits: list[str]
+    range_metadata: dict[str, Any], traversal: str, commit_reviews: list[JsonObject]
 ) -> JsonObject:
     base = range_metadata.get("base")
     target = range_metadata.get("target")
+    commits = [str(review["commit"]) for review in commit_reviews]
     manifest = {
         **range_metadata,
         "artifact_type": "commit_range_manifest",
@@ -183,6 +184,12 @@ def _range_manifest(
         "traversal": traversal,
         "commit_count": len(commits),
         "commits": commits,
+        "commit_artifact_refs": [
+            str(review["commit_artifact"]["id"]) for review in commit_reviews
+        ],
+        "commit_facts": [
+            _range_commit_fact(review["commit_artifact"]) for review in commit_reviews
+        ],
         "errors": [],
         "evidence_refs": range_metadata.get("evidence_refs")
         or [f"git:rev-list:{base}..{target}"],
@@ -191,6 +198,19 @@ def _range_manifest(
         "risk_hints": [],
     }
     return manifest
+
+
+def _range_commit_fact(commit_artifact: JsonObject) -> JsonObject:
+    return {
+        "commit": commit_artifact["commit"],
+        "author": commit_artifact["author"],
+        "committer": commit_artifact["committer"],
+        "touched_paths": commit_artifact["touched_paths"],
+        "path_changes": commit_artifact["path_changes"],
+        "diff_stats": commit_artifact["diff_stats"],
+        "tags": commit_artifact["tags"],
+        "signature": commit_artifact["signature"],
+    }
 
 
 def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:

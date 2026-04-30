@@ -136,6 +136,7 @@ def make_merge_repo_with_direct_tree_delta(tmp_path: Path) -> tuple[Path, str, s
 
 def test_review_range_orders_base_exclusive_target_inclusive_commits(tmp_path: Path):
     repo, base, first, second = make_linear_repo(tmp_path)
+    run_git(repo, "tag", "range-reviewed", first)
 
     result = review_range(repo, base=base, target=second)
 
@@ -147,6 +148,48 @@ def test_review_range_orders_base_exclusive_target_inclusive_commits(tmp_path: P
     assert result["range"]["artifact_type"] == "commit_range_manifest"
     assert result["range"]["id"] == "range:base-exclusive-target-inclusive"
     assert result["range"]["commits"] == [first, second]
+    assert result["range"]["commit_artifact_refs"] == [
+        f"commit:{first}",
+        f"commit:{second}",
+    ]
+    assert result["range"]["commit_facts"] == [
+        {
+            "commit": first,
+            "author": {
+                "name": "Fixture Author",
+                "email": "fixture@example.test",
+                "timestamp": "2024-01-01T00:00:00Z",
+            },
+            "committer": {
+                "name": "Fixture Author",
+                "email": "fixture@example.test",
+                "timestamp": "2024-01-01T00:00:00Z",
+            },
+            "touched_paths": ["drivers/net.c"],
+            "path_changes": [{"status": "A", "score": None, "paths": ["drivers/net.c"]}],
+            "diff_stats": [{"additions": 1, "deletions": 0, "path": "drivers/net.c"}],
+            "tags": [{"name": "range-reviewed", "kind": "tag"}],
+            "signature": {"status": "unsigned-or-unverified", "verified": False},
+        },
+        {
+            "commit": second,
+            "author": {
+                "name": "Fixture Author",
+                "email": "fixture@example.test",
+                "timestamp": "2024-01-01T00:00:00Z",
+            },
+            "committer": {
+                "name": "Fixture Author",
+                "email": "fixture@example.test",
+                "timestamp": "2024-01-01T00:00:00Z",
+            },
+            "touched_paths": ["docs/notes.txt"],
+            "path_changes": [{"status": "A", "score": None, "paths": ["docs/notes.txt"]}],
+            "diff_stats": [{"additions": 1, "deletions": 0, "path": "docs/notes.txt"}],
+            "tags": [],
+            "signature": {"status": "unsigned-or-unverified", "verified": False},
+        },
+    ]
     assert result["range"]["evidence_refs"] == [f"git:rev-list:{base}..{second}"]
     assert result["range"]["trust_boundary"] == "derived_review_signal"
     assert result["range"]["limits"] == {"truncated": False, "omitted_record_count": 0}

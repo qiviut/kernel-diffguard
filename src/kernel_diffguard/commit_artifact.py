@@ -10,6 +10,9 @@ JsonObject = dict[str, Any]
 
 _FORMAT_SEPARATOR = "%x1f"
 _MAX_DEFAULT_DIFF_EXCERPT_BYTES = 16_384
+_MAX_TAG_RECORDS = 32
+_MAX_TAG_NAME_BYTES = 256
+_SIGNATURE_VERIFY_TIMEOUT_SECONDS = 5
 
 
 def parse_commit_artifact(
@@ -61,6 +64,12 @@ def parse_commit_artifact(
     )
     touched_paths = sorted({path for change in path_changes for path in change["paths"]})
     risk_hints = ["diff-excerpt-truncated"] if truncated else []
+    tags, omitted_tag_records = _commit_tags(repo_path, commit_sha)
+    signature = _commit_signature(repo_path, commit_sha)
+    if omitted_tag_records:
+        risk_hints.append("tag-facts-truncated")
+    if signature["status"] == "verification-timeout":
+        risk_hints.append("signature-verification-timeout")
 
     return {
         "artifact_type": "commit_artifact",
@@ -76,15 +85,20 @@ def parse_commit_artifact(
         "touched_paths": touched_paths,
         "path_changes": path_changes,
         "diff_stats": diff_stats,
+        "tags": tags,
+        "signature": signature,
         "diff_excerpt": diff_excerpt,
         "evidence_refs": [f"git:commit:{commit_sha}"],
         "trust_boundary": "local_git_metadata_untrusted",
         "secondary_trust_boundaries": ["local_git_diff_untrusted"],
         "limits": {
-            "truncated": truncated,
-            "omitted_record_count": 1 if truncated else 0,
+            "truncated": truncated or bool(omitted_tag_records),
+            "omitted_record_count": (1 if truncated else 0) + omitted_tag_records,
             "max_diff_excerpt_bytes": max_diff_excerpt_bytes,
             "diff_excerpt_bytes": len(diff_excerpt.encode()),
+            "max_tag_records": _MAX_TAG_RECORDS,
+            "max_tag_name_bytes": _MAX_TAG_NAME_BYTES,
+            "omitted_tag_record_count": omitted_tag_records,
         },
         "risk_hints": risk_hints,
     }
@@ -138,6 +152,50 @@ def _commit_metadata(repo: Path, commit_sha: str) -> JsonObject:
 def _normalize_commit_body(body: str) -> str:
     stripped = body.rstrip("\n")
     return f"{stripped}\n" if stripped else ""
+
+
+def _commit_tags(repo: Path, commit_sha: str) -> tuple[list[JsonObject], int]:
+    raw = _git(
+        repo,
+        "for-each-ref",
+        f"--count={_MAX_TAG_RECORDS + 1}",
+        "--format=%(refname:short)%00%(objecttype)",
+        "--points-at",
+        commit_sha,
+        "refs/tags",
+    )
+    tags: list[JsonObject] = []
+    omitted_records = 0
+    for line in raw.splitlines():
+        if not line:
+            continue
+        if len(tags) >= _MAX_TAG_RECORDS:
+            omitted_records += 1
+            continue
+        name, _object_type = line.split("\x00", maxsplit=1)
+        encoded_name = name.encode()
+        if len(encoded_name) > _MAX_TAG_NAME_BYTES:
+            name = encoded_name[:_MAX_TAG_NAME_BYTES].decode(errors="ignore")
+            omitted_records += 1
+        tags.append({"name": name, "kind": "tag"})
+    return sorted(tags, key=lambda tag: tag["name"]), omitted_records
+
+
+def _commit_signature(repo: Path, commit_sha: str) -> JsonObject:
+    try:
+        completed = subprocess.run(
+            ["git", "verify-commit", "--raw", "--end-of-options", commit_sha],
+            cwd=repo,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=_SIGNATURE_VERIFY_TIMEOUT_SECONDS,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return {"status": "verification-timeout", "verified": False}
+    if completed.returncode == 0:
+        return {"status": "verified", "verified": True}
+    return {"status": "unsigned-or-unverified", "verified": False}
 
 
 def _parse_name_status(raw: str) -> list[JsonObject]:
