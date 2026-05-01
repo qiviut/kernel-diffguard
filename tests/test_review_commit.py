@@ -77,6 +77,59 @@ def test_review_commit_flags_deterministic_easy_win_findings(tmp_path: Path):
     assert all(finding["evidence"] for finding in result["findings"])
 
 
+def test_review_commit_emits_integrity_assessment_without_verdicts(tmp_path: Path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    run_git(repo, "init", "--initial-branch", "main")
+    run_git(repo, "config", "user.name", "Fixture Committer")
+    run_git(repo, "config", "user.email", "committer@example.test")
+
+    (repo / "README.md").write_text("baseline\n")
+    env = os.environ | {
+        "GIT_AUTHOR_NAME": "Different Author",
+        "GIT_AUTHOR_EMAIL": "author@example.test",
+        "GIT_AUTHOR_DATE": "2023-01-01T00:00:00+00:00",
+        "GIT_COMMITTER_DATE": "2024-01-01T00:00:00+00:00",
+    }
+    subprocess.run(["git", "add", "-A"], cwd=repo, check=True, env=env)
+    subprocess.run(
+        ["git", "commit", "-m", "import externally authored change"],
+        cwd=repo,
+        check=True,
+        env=env,
+    )
+    commit = run_git(repo, "rev-parse", "HEAD")
+
+    result = review_commit(repo, commit)
+
+    integrity = result["integrity_assessment"]
+    assert integrity["artifact_type"] == "integrity_assessment"
+    assert integrity["commit"] == commit
+    assert integrity["review_input"] == commit
+    assert integrity["object_checks"] == {
+        "commit_object_reachable": True,
+        "tree_object_reachable": True,
+    }
+    assert integrity["provenance_cues"] == [
+        "author-committer-identity-differs",
+        "author-committer-timestamp-gap",
+        "unsigned-or-unverified-signature",
+    ]
+    assert integrity["uncertainty"] == "deterministic-facts-with-heuristic-cues"
+
+    finding_ids = {finding["id"] for finding in result["findings"]}
+    assert "commit-integrity-cue" in finding_ids
+    integrity_finding = next(
+        finding for finding in result["findings"] if finding["id"] == "commit-integrity-cue"
+    )
+    assert integrity_finding["severity"] == "medium"
+    assert "not proof" in integrity_finding["false_positive_caveat"]
+    assert "cue:author-committer-identity-differs" in integrity_finding["evidence"]
+    assert "object:commit-reachable" in integrity_finding["evidence"]
+    hook_ids = {hook["id"] for hook in result["optional_check_hooks"]}
+    assert hook_ids >= {"generated-artifact-reproducibility", "binary-artifact-comparison"}
+
+
 def test_review_commit_text_report_has_mvp_sections(tmp_path: Path, capsys):
     repo, commit = make_repo_with_suspicious_commit(tmp_path)
 
@@ -356,6 +409,20 @@ def test_review_commit_emits_static_regression_hooks(tmp_path: Path):
             "id": "static-analyzer-delta",
             "status": "available-when-configured",
             "summary": "Compare static analyzer findings before and after the change.",
+            "evidence_refs": [f"commit:{commit}"],
+            "trust_boundary": "derived_review_signal",
+        },
+        {
+            "id": "generated-artifact-reproducibility",
+            "status": "available-when-configured",
+            "summary": "Rebuild generated artifacts and compare them with committed output.",
+            "evidence_refs": [f"commit:{commit}"],
+            "trust_boundary": "derived_review_signal",
+        },
+        {
+            "id": "binary-artifact-comparison",
+            "status": "available-when-configured",
+            "summary": "Compare binary artifacts against trusted rebuilds or prior releases.",
             "evidence_refs": [f"commit:{commit}"],
             "trust_boundary": "derived_review_signal",
         },

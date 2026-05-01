@@ -7,6 +7,7 @@ import re
 import shlex
 import subprocess
 from collections.abc import Iterable
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -76,6 +77,7 @@ def review_commit(repo: Path | str, commit: str) -> JsonObject:
     body = commit_artifact["body"]
     name_status = commit_artifact["path_changes"]
     patch = commit_artifact["diff_excerpt"]
+    integrity_assessment = _integrity_assessment(repo_path, commit, commit_artifact)
 
     findings: list[JsonObject] = []
     touched_paths = sorted({path for entry in name_status for path in entry["paths"]})
@@ -167,6 +169,29 @@ def review_commit(repo: Path | str, commit: str) -> JsonObject:
             )
         )
 
+    integrity_cues = integrity_assessment["provenance_cues"]
+    review_attention_cues = [
+        cue for cue in integrity_cues if cue != "unsigned-or-unverified-signature"
+    ]
+    if review_attention_cues:
+        evidence = [f"cue:{cue}" for cue in integrity_cues]
+        if integrity_assessment["object_checks"]["commit_object_reachable"]:
+            evidence.append("object:commit-reachable")
+        if integrity_assessment["object_checks"]["tree_object_reachable"]:
+            evidence.append("object:tree-reachable")
+        findings.append(
+            _finding(
+                "commit-integrity-cue",
+                "medium",
+                "Commit provenance or object-integrity facts deserve review attention.",
+                evidence,
+                (
+                    "Verify authorship, signature policy, review path, and object provenance "
+                    "before treating the change as trusted."
+                ),
+            )
+        )
+
     hostile_hits = scan_hostile_instruction_texts(
         [
             ("commit-subject", subject),
@@ -234,6 +259,7 @@ def review_commit(repo: Path | str, commit: str) -> JsonObject:
         "touched_paths": touched_paths,
         "kernel_impacts": kernel_impacts_for_paths(touched_paths),
         "commit_artifact": commit_artifact,
+        "integrity_assessment": integrity_assessment,
         "findings": findings,
         "optional_check_hooks": _optional_check_hooks(commit_sha),
     }
@@ -367,6 +393,67 @@ def _unique_values(values: list[str]) -> list[str]:
     return unique
 
 
+def _integrity_assessment(repo: Path, review_input: str, artifact: JsonObject) -> JsonObject:
+    commit = str(artifact["commit"])
+    tree = str(artifact["tree"])
+    object_checks = {
+        "commit_object_reachable": _git_object_exists(repo, f"{commit}^{{commit}}"),
+        "tree_object_reachable": _git_object_exists(repo, f"{tree}^{{tree}}"),
+    }
+    provenance_cues: list[str] = []
+    author = artifact["author"]
+    committer = artifact["committer"]
+    if (author.get("name"), author.get("email")) != (
+        committer.get("name"),
+        committer.get("email"),
+    ):
+        provenance_cues.append("author-committer-identity-differs")
+    if _timestamp_gap_days(author.get("timestamp", ""), committer.get("timestamp", "")) >= 30:
+        provenance_cues.append("author-committer-timestamp-gap")
+    signature = artifact.get("signature", {})
+    if signature.get("status") != "verified":
+        provenance_cues.append("unsigned-or-unverified-signature")
+    if not object_checks["commit_object_reachable"]:
+        provenance_cues.append("commit-object-unreachable")
+    if not object_checks["tree_object_reachable"]:
+        provenance_cues.append("tree-object-unreachable")
+    return {
+        "artifact_type": "integrity_assessment",
+        "schema_version": 1,
+        "id": f"integrity:{commit}",
+        "commit": commit,
+        "review_input": review_input,
+        "resolved_commit": commit,
+        "tree": tree,
+        "signature": signature,
+        "object_checks": object_checks,
+        "provenance_cues": provenance_cues,
+        "evidence_refs": [f"git:commit:{commit}", f"git:tree:{tree}"],
+        "trust_boundary": "derived_review_signal",
+        "uncertainty": "deterministic-facts-with-heuristic-cues",
+    }
+
+
+def _timestamp_gap_days(first: str, second: str) -> int:
+    try:
+        first_dt = datetime.fromisoformat(first.replace("Z", "+00:00"))
+        second_dt = datetime.fromisoformat(second.replace("Z", "+00:00"))
+    except ValueError:
+        return 0
+    return abs((second_dt - first_dt).days)
+
+
+def _git_object_exists(repo: Path, object_name: str) -> bool:
+    completed = subprocess.run(
+        ["git", "cat-file", "-e", object_name],
+        cwd=repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return completed.returncode == 0
+
+
 def _git(repo: Path, *args: str) -> str:
     completed = subprocess.run(
         ["git", *args],
@@ -423,6 +510,20 @@ def _optional_check_hooks(commit_sha: str) -> list[JsonObject]:
             "id": "static-analyzer-delta",
             "status": "available-when-configured",
             "summary": "Compare static analyzer findings before and after the change.",
+            "evidence_refs": [f"commit:{commit_sha}"],
+            "trust_boundary": "derived_review_signal",
+        },
+        {
+            "id": "generated-artifact-reproducibility",
+            "status": "available-when-configured",
+            "summary": "Rebuild generated artifacts and compare them with committed output.",
+            "evidence_refs": [f"commit:{commit_sha}"],
+            "trust_boundary": "derived_review_signal",
+        },
+        {
+            "id": "binary-artifact-comparison",
+            "status": "available-when-configured",
+            "summary": "Compare binary artifacts against trusted rebuilds or prior releases.",
             "evidence_refs": [f"commit:{commit_sha}"],
             "trust_boundary": "derived_review_signal",
         },

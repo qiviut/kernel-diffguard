@@ -200,6 +200,39 @@ def test_review_range_orders_base_exclusive_target_inclusive_commits(tmp_path: P
     assert result["findings_by_commit"][second] == []
 
 
+def test_review_range_flags_split_setup_use_pattern(tmp_path: Path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    run_git(repo, "init", "--initial-branch", "main")
+    run_git(repo, "config", "user.name", "Fixture Author")
+    run_git(repo, "config", "user.email", "fixture@example.test")
+
+    (repo / ".github" / "workflows").mkdir(parents=True)
+    (repo / ".github" / "workflows" / "ci.yml").write_text(
+        "name: CI\nsteps:\n  - run: pytest\n  - run: ruff check .\n"
+    )
+    base = commit_all(repo, "Initial CI baseline")
+
+    (repo / ".github" / "workflows" / "ci.yml").write_text("name: CI\nsteps:\n  - run: pytest\n")
+    setup_commit = commit_all(repo, "ci: simplify checks")
+
+    (repo / "drivers" / "net").mkdir(parents=True)
+    (repo / "drivers" / "net" / "adapter.c").write_text("int adapter(void) { return 0; }\n")
+    use_commit = commit_all(repo, "drivers/net: add adapter")
+
+    result = review_range(repo, base=base, target=use_commit)
+
+    assert result["range"]["commits"] == [setup_commit, use_commit]
+    range_findings = result["range_findings"]
+    assert [finding["id"] for finding in range_findings] == ["split-setup-use-pattern"]
+    finding = range_findings[0]
+    assert finding["severity"] == "medium"
+    assert finding["uncertainty"] == "heuristic"
+    assert f"setup-commit:{setup_commit}" in finding["evidence"]
+    assert f"use-commit:{use_commit}" in finding["evidence"]
+    assert "not proof" in finding["false_positive_caveat"]
+
+
 def test_review_merge_commit_expands_introduced_child_commits(tmp_path: Path):
     repo, _base, risky_child, benign_child, merge_commit = make_merge_repo(tmp_path)
 

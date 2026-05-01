@@ -154,6 +154,7 @@
     "traversal": "base-exclusive-target-inclusive",
     "trust_boundary": "derived_review_signal"
   },
+  "range_findings": [],
   "range_signals": {
     "authors": [
       {

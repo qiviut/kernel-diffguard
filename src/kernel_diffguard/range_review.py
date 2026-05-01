@@ -161,6 +161,7 @@ def _review_commit_sequence(
         "review_posture": "review-assistant-not-verdict",
         "range": range_manifest,
         "range_signals": _range_signals(repo, signal_reviews),
+        "range_findings": _range_findings(commit_reviews),
         "commits": commit_reviews,
         "findings_by_commit": {
             review["commit"]: review.get("findings", []) for review in signal_reviews
@@ -212,6 +213,47 @@ def _range_commit_fact(commit_artifact: JsonObject) -> JsonObject:
         "tags": commit_artifact["tags"],
         "signature": commit_artifact["signature"],
     }
+
+
+def _range_findings(commit_reviews: list[JsonObject]) -> list[JsonObject]:
+    setup_commits: list[JsonObject] = []
+    use_commits: list[JsonObject] = []
+    for review in commit_reviews:
+        finding_ids = {finding["id"] for finding in review.get("findings", [])}
+        paths = [str(path) for path in review.get("touched_paths", [])]
+        setup_surface = bool(
+            finding_ids & {"ci-static-analysis-weakened", "removed-test", "warning-policy-weakened"}
+        ) or any(
+            _is_ci_path(path) or _is_test_path(path) or _looks_like_script(path)
+            for path in paths
+        )
+        if setup_surface:
+            setup_commits.append(review)
+        if "high-risk-path" in finding_ids or any(
+            path.startswith(HIGH_RISK_PREFIXES) for path in paths
+        ):
+            use_commits.append(review)
+    if not setup_commits or not use_commits:
+        return []
+    setup_commit = str(setup_commits[0]["commit"])
+    use_commit = str(use_commits[-1]["commit"])
+    if setup_commit == use_commit:
+        return []
+    return [
+        _finding(
+            "split-setup-use-pattern",
+            "medium",
+            "Range separates review-surface changes from high-risk code changes.",
+            [
+                f"setup-commit:{setup_commit}",
+                f"use-commit:{use_commit}",
+            ],
+            (
+                "Review the commits together for setup/use separation: a policy, test, CI, "
+                "or script change may alter how the later high-risk change is evaluated."
+            ),
+        )
+    ]
 
 
 def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
@@ -272,6 +314,8 @@ def _range_signals(repo: Path, commit_reviews: list[JsonObject]) -> JsonObject:
             author_path_prefixes[prefix] = author_path_prefixes.get(prefix, 0) + 1
         for finding in commit_review.get("findings", []):
             finding_id = str(finding["id"])
+            if finding_id == "commit-integrity-cue":
+                continue
             finding_ids[finding_id] = finding_ids.get(finding_id, 0) + 1
             author_finding_ids = author_entry["finding_ids"]
             author_finding_ids[finding_id] = author_finding_ids.get(finding_id, 0) + 1
@@ -539,7 +583,11 @@ def _finding(
         "severity": severity,
         "summary": summary,
         "evidence": evidence,
+        "evidence_refs": evidence,
         "uncertainty": "heuristic",
+        "false_positive_caveat": (
+            "Heuristic cue only, not proof of a regression or malicious change."
+        ),
         "suggested_next_check": suggested_next_check,
     }
 
