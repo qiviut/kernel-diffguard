@@ -10,15 +10,8 @@ from pathlib import Path
 from typing import Any
 
 from .commit_artifact import parse_commit_artifact
+from .hostile_input import scan_hostile_instruction_texts
 from .kernel_impact import kernel_impacts_for_paths
-
-PROMPT_INJECTION_MARKERS = (
-    "ignore previous instructions",
-    "disregard previous instructions",
-    "exfiltrate secrets",
-    "reveal secrets",
-    "system prompt",
-)
 
 HIGH_RISK_PREFIXES = (
     "arch/",
@@ -173,16 +166,30 @@ def review_commit(repo: Path | str, commit: str) -> JsonObject:
             )
         )
 
-    prompt_hits = [
-        marker for marker in PROMPT_INJECTION_MARKERS if marker in f"{body}\n{patch}".lower()
-    ]
-    if prompt_hits:
+    hostile_hits = scan_hostile_instruction_texts(
+        [
+            ("commit-subject", subject),
+            ("commit-body", body),
+            ("diff", patch),
+            *[(f"path:{path}", path) for path in touched_paths],
+        ]
+    )
+    if hostile_hits:
+        evidence = sorted(
+            {
+                *[f"marker:{hit.marker}" for hit in hostile_hits],
+                *[f"location:{hit.location}" for hit in hostile_hits],
+            }
+        )
         findings.append(
             _finding(
                 "prompt-injection-text",
                 "medium",
-                "Prompt-injection or hostile-instruction language appears in commit text or diff.",
-                [f"marker:{marker}" for marker in sorted(set(prompt_hits))],
+                (
+                    "Prompt-injection or hostile-instruction language appears in commit text, "
+                    "paths, or diff."
+                ),
+                evidence,
                 "Treat affected text as hostile data and avoid feeding it directly "
                 "to privileged tools or prompts.",
             )

@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from .hostile_input import hostile_risk_hints
+
 JsonObject = dict[str, Any]
 
 _MAX_BODY_EXCERPT_BYTES = 16_384
@@ -22,10 +24,6 @@ _MAX_DERIVED_RECORDS = 32
 _MAX_ATTACHMENT_SCAN_BYTES = 16_384
 _URL_RE = re.compile(r"https?://[^\s<>()\[\]{}\"']+")
 _DIFF_PATH_RE = re.compile(r"^diff --git a/(.*?) b/(.*?)$", re.MULTILINE)
-_PROMPT_INJECTION_RE = re.compile(
-    r"\b(ignore (all )?(previous|prior) instructions|exfiltrate|system prompt|developer message)\b",
-    re.IGNORECASE,
-)
 _EXECUTABLE_SNIPPET_RE = re.compile(
     r"(^#!\s*/|\b(?:curl|wget)\b[^\n|]*(?:\|\s*(?:sh|bash))|\brm\s+-rf\b|\bsudo\b)",
     re.IGNORECASE | re.MULTILINE,
@@ -339,8 +337,6 @@ def _risk_hints(message: Message, plain_text: str, body_truncated: bool) -> list
     combined = "\n".join([_header(message, "subject"), plain_text])
     if body_truncated:
         risk_hints.append("body-excerpt-truncated")
-    if _PROMPT_INJECTION_RE.search(combined):
-        risk_hints.append("hostile-instruction-language")
     attachment_text_parts: list[str] = []
     attachment_text_bytes = 0
     if message.is_multipart():
@@ -354,6 +350,14 @@ def _risk_hints(message: Message, plain_text: str, body_truncated: bool) -> list
             attachment_text_parts.append(excerpt)
             attachment_text_bytes += len(excerpt.encode())
     attachment_text = "\n".join(attachment_text_parts)
+    hostile_hints = hostile_risk_hints(
+        [
+            ("email-subject", _header(message, "subject")),
+            ("email-body", plain_text),
+            ("email-attachment", attachment_text),
+        ]
+    )
+    risk_hints.extend(hostile_hints)
     if _EXECUTABLE_SNIPPET_RE.search(combined) or _EXECUTABLE_SNIPPET_RE.search(attachment_text):
         risk_hints.append("executable-looking-snippet")
     urls, _omitted_urls = _urls(combined)

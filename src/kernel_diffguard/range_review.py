@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .commit_review import CI_STATIC_ANALYSIS_MARKERS, PROMPT_INJECTION_MARKERS, review_commit
+from .commit_review import CI_STATIC_ANALYSIS_MARKERS, review_commit
+from .hostile_input import scan_hostile_instruction_texts
 from .kernel_impact import kernel_impacts_for_paths
 
 JsonObject = dict[str, Any]
@@ -439,16 +440,25 @@ def _findings_for_paths(
                 "or release paths.",
             )
         )
-    prompt_hits = [
-        marker for marker in PROMPT_INJECTION_MARKERS if marker in patch_excerpt.lower()
-    ]
-    if prompt_hits:
+    hostile_hits = scan_hostile_instruction_texts(
+        [
+            ("merge-tree-delta", patch_excerpt),
+            *[(f"path:{path}", path) for path in touched_paths],
+        ]
+    )
+    if hostile_hits:
+        evidence = sorted(
+            {
+                *[f"marker:{hit.marker}" for hit in hostile_hits],
+                *[f"location:{hit.location}" for hit in hostile_hits],
+            }
+        )
         findings.append(
             _finding(
                 "prompt-injection-text",
                 "medium",
                 "Prompt-injection or hostile-instruction language appears in the merge tree delta.",
-                [f"marker:{marker}" for marker in sorted(set(prompt_hits))],
+                evidence,
                 "Treat affected merge-only text as hostile data before model-assisted review.",
             )
         )
