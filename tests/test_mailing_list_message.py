@@ -116,13 +116,11 @@ Content-Type: text/plain; charset=utf-8
 
 def test_parse_message_caps_hostile_derived_records_and_attachment_scan():
     many_urls = "\n".join(f"https://example{i}.test/path" for i in range(80))
-    many_diffs = "\n".join(
-        f"diff --git a/path{i}.c b/path{i}.c\n+line" for i in range(80)
-    )
+    many_diffs = "\n".join(f"diff --git a/path{i}.c b/path{i}.c\n+line" for i in range(80))
     many_attachments = "\n".join(
         "--BOUNDARY\n"
         "Content-Type: text/plain\n"
-        f"Content-Disposition: attachment; filename=\"a{i}.txt\"\n\n"
+        f'Content-Disposition: attachment; filename="a{i}.txt"\n\n'
         f"attachment {i}\n"
         for i in range(80)
     )
@@ -216,6 +214,7 @@ Reviewer signature
         "has_patch": False,
         "has_diff": False,
         "touched_paths": [],
+        "patch_id": "",
     }
 
     attached_patch = """Message-ID: <attached-patch@example.test>
@@ -239,11 +238,10 @@ diff --git a/kernel/fix.c b/kernel/fix.c
 
     artifact = parse_mailing_list_message(attached_patch, source_ref="fixture:attached")
 
-    assert artifact["patch"] == {
-        "has_patch": True,
-        "has_diff": True,
-        "touched_paths": ["kernel/fix.c"],
-    }
+    assert artifact["patch"]["has_patch"] is True
+    assert artifact["patch"]["has_diff"] is True
+    assert artifact["patch"]["touched_paths"] == ["kernel/fix.c"]
+    assert len(artifact["patch"]["patch_id"]) == 40
 
 
 def test_parse_mbox_entry_and_cli_emit_stable_json(tmp_path, capsys):

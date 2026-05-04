@@ -97,6 +97,9 @@ def find_related_message_candidates(
 
 def _match_evidence(commit: JsonObject, message: JsonObject, window: timedelta) -> list[JsonObject]:
     evidence: list[JsonObject] = []
+    patch_id_evidence = _patch_id_evidence(commit, message)
+    if patch_id_evidence:
+        evidence.append(patch_id_evidence)
     timestamp_evidence = _timestamp_evidence(commit, message, window)
     if timestamp_evidence:
         evidence.append(timestamp_evidence)
@@ -110,6 +113,14 @@ def _match_evidence(commit: JsonObject, message: JsonObject, window: timedelta) 
     if list_evidence:
         evidence.append(list_evidence)
     return evidence[:_MAX_MATCH_EVIDENCE_RECORDS]
+
+
+def _patch_id_evidence(commit: JsonObject, message: JsonObject) -> JsonObject | None:
+    commit_patch_id = str(commit.get("patch_id", ""))
+    message_patch_id = str(message.get("patch", {}).get("patch_id", ""))
+    if not commit_patch_id or commit_patch_id != message_patch_id:
+        return None
+    return {"kind": "patch-id", "score": 8, "patch_id": commit_patch_id}
 
 
 def _timestamp_evidence(

@@ -3,8 +3,35 @@ from __future__ import annotations
 import json
 
 from kernel_diffguard.cli import main
+from kernel_diffguard.commit_artifact import parse_commit_artifact
 from kernel_diffguard.mailing_list import parse_mailing_list_message
 from kernel_diffguard.related_messages import find_related_message_candidates
+from test_commit_artifact import commit_all, make_repo, run_git
+
+
+def test_find_related_messages_scores_patch_id_match_between_commit_and_message(tmp_path):
+    repo = make_repo(tmp_path)
+    (repo / "net").mkdir()
+    (repo / "net" / "guard.c").write_text("int guard(void) { return 0; }\n")
+    commit_all(repo, "Initial guard")
+    (repo / "net" / "guard.c").write_text("int guard(void) { return 1; }\n")
+    commit = commit_all(repo, "net: fix guard")
+    commit_artifact = parse_commit_artifact(repo, commit)
+    patch_id = commit_artifact["patch_id"]
+    patch_email = run_git(repo, "format-patch", "-1", "--stdout", commit)
+    message_artifact = parse_mailing_list_message(
+        patch_email,
+        source_ref="fixture:format-patch",
+    )
+
+    candidates = find_related_message_candidates([commit_artifact], [message_artifact])
+
+    assert message_artifact["patch"]["patch_id"] == patch_id
+    assert candidates[0]["match_evidence"][0] == {
+        "kind": "patch-id",
+        "score": 8,
+        "patch_id": patch_id,
+    }
 
 
 def test_find_related_messages_scores_subject_time_path_and_list_evidence():

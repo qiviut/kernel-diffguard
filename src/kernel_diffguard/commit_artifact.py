@@ -13,6 +13,7 @@ _MAX_DEFAULT_DIFF_EXCERPT_BYTES = 16_384
 _MAX_TAG_RECORDS = 32
 _MAX_TAG_NAME_BYTES = 256
 _SIGNATURE_VERIFY_TIMEOUT_SECONDS = 5
+_PATCH_ID_TIMEOUT_SECONDS = 5
 
 
 def parse_commit_artifact(
@@ -62,6 +63,7 @@ def parse_commit_artifact(
         commit_sha,
         "--",
     )
+    patch_id = _commit_patch_id(repo_path, commit_sha)
     touched_paths = sorted({path for change in path_changes for path in change["paths"]})
     risk_hints = ["diff-excerpt-truncated"] if truncated else []
     tags, omitted_tag_records = _commit_tags(repo_path, commit_sha)
@@ -85,6 +87,7 @@ def parse_commit_artifact(
         "touched_paths": touched_paths,
         "path_changes": path_changes,
         "diff_stats": diff_stats,
+        "patch_id": patch_id,
         "tags": tags,
         "signature": signature,
         "diff_excerpt": diff_excerpt,
@@ -196,6 +199,32 @@ def _commit_signature(repo: Path, commit_sha: str) -> JsonObject:
     if completed.returncode == 0:
         return {"status": "verified", "verified": True}
     return {"status": "unsigned-or-unverified", "verified": False}
+
+
+def _commit_patch_id(repo: Path, commit_sha: str) -> str:
+    diff = _git(repo, "show", "--no-ext-diff", "--format=", "--find-renames", commit_sha, "--")
+    return _stable_patch_id(diff)
+
+
+def _stable_patch_id(diff_text: str) -> str:
+    if not diff_text.strip():
+        return ""
+    try:
+        completed = subprocess.run(
+            ["git", "patch-id", "--stable"],
+            input=diff_text,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=_PATCH_ID_TIMEOUT_SECONDS,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return ""
+    if completed.returncode != 0:
+        return ""
+    first_line = completed.stdout.splitlines()[0] if completed.stdout.splitlines() else ""
+    return first_line.split()[0] if first_line else ""
 
 
 def _parse_name_status(raw: str) -> list[JsonObject]:

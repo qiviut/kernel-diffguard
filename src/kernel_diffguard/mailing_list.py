@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
 from datetime import UTC
 from email import policy
 from email.message import Message
@@ -22,6 +23,7 @@ _MAX_BODY_EXCERPT_BYTES = 16_384
 _MAX_HEADER_BYTES = 512
 _MAX_DERIVED_RECORDS = 32
 _MAX_ATTACHMENT_SCAN_BYTES = 16_384
+_PATCH_ID_TIMEOUT_SECONDS = 5
 _URL_RE = re.compile(r"https?://[^\s<>()\[\]{}\"']+")
 _DIFF_PATH_RE = re.compile(r"^diff --git a/(.*?) b/(.*?)$", re.MULTILINE)
 _EXECUTABLE_SNIPPET_RE = re.compile(
@@ -329,7 +331,29 @@ def _patch_facts(text: str) -> tuple[JsonObject, int]:
         "has_patch": has_diff or bool(re.search(r"^---\s+\S", text, re.MULTILINE)),
         "has_diff": has_diff,
         "touched_paths": touched_paths,
+        "patch_id": _stable_patch_id(text) if has_diff else "",
     }, omitted_paths
+
+
+def _stable_patch_id(diff_text: str) -> str:
+    if not diff_text.strip():
+        return ""
+    try:
+        completed = subprocess.run(
+            ["git", "patch-id", "--stable"],
+            input=diff_text,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=_PATCH_ID_TIMEOUT_SECONDS,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return ""
+    if completed.returncode != 0:
+        return ""
+    first_line = completed.stdout.splitlines()[0] if completed.stdout.splitlines() else ""
+    return first_line.split()[0] if first_line else ""
 
 
 def _risk_hints(message: Message, plain_text: str, body_truncated: bool) -> list[str]:
