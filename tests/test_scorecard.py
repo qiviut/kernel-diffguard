@@ -13,11 +13,11 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
     assert scorecard["schema_version"] == 1
     assert scorecard["review_posture"] == "metrics-are-steering-signals-not-product-claims"
     assert scorecard["counts"] == {
-        "supported_input_shapes": 6,
+        "supported_input_shapes": 7,
         "heuristic_findings": 13,
         "golden_cases": 3,
         "schema_fields_with_evidence_references": 12,
-        "normalized_evidence_artifact_schemas": 7,
+        "normalized_evidence_artifact_schemas": 8,
         "trust_boundary_labels": 5,
         "end_to_end_reviewer_examples": 3,
     }
@@ -26,6 +26,7 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "commit_range_manifest",
         "external_evidence_record",
         "finding",
+        "lore_search_result_set",
         "mailing_list_message_artifact",
         "recommendation",
         "related_message_candidate",
@@ -49,6 +50,7 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "local merge commit expansion",
         "single RFC822/mbox mailing-list message",
         "normalized commit/message related-candidate scoring",
+        "lore.kernel.org Atom search to normalized message artifacts",
     ]
     assert scorecard["heuristic_findings"] == [
         "body-excerpt-truncated",
@@ -81,11 +83,11 @@ def test_scorecard_renderers_are_deterministic_and_human_readable():
 
     text = render_text(scorecard)
     assert "Review-signal scorecard" in text
-    assert "supported input shapes: 6" in text
+    assert "supported input shapes: 7" in text
     assert "heuristic findings: 13" in text
     assert "golden cases: 3" in text
     assert "schema fields with evidence references: 12" in text
-    assert "normalized evidence artifact schemas: 7" in text
+    assert "normalized evidence artifact schemas: 8" in text
     assert "trust boundary labels: 5" in text
     assert "feature changes require a scorecard delta" in text
 

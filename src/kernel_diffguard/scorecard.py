@@ -17,6 +17,7 @@ SUPPORTED_INPUT_SHAPES = (
     "local merge commit expansion",
     "single RFC822/mbox mailing-list message",
     "normalized commit/message related-candidate scoring",
+    "lore.kernel.org Atom search to normalized message artifacts",
 )
 
 HEURISTIC_FINDINGS = (

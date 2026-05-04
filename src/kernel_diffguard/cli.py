@@ -11,6 +11,8 @@ from .charter import summarize_goals
 from .commit_review import render_json as render_commit_json
 from .commit_review import render_text as render_commit_text
 from .commit_review import review_commit
+from .lore import render_json as render_lore_json
+from .lore import search_lore_messages
 from .mailing_list import parse_mailing_list_message_file
 from .mailing_list import render_json as render_message_json
 from .range_review import (
@@ -122,6 +124,23 @@ def build_parser() -> argparse.ArgumentParser:
         default="json",
         help="output format",
     )
+    lore_search_parser = subparsers.add_parser(
+        "lore-search",
+        help="search lore.kernel.org Atom results and emit normalized message artifacts",
+    )
+    lore_search_parser.add_argument("--query", required=True, help="lore search query")
+    lore_search_parser.add_argument(
+        "--max-results",
+        type=int,
+        default=16,
+        help="maximum raw lore messages to fetch and parse",
+    )
+    lore_search_parser.add_argument(
+        "--format",
+        choices=("json",),
+        default="json",
+        help="output format",
+    )
     scorecard_parser = subparsers.add_parser(
         "scorecard",
         help="emit deterministic review-signal value metrics",
@@ -192,6 +211,10 @@ def main(argv: list[str] | None = None) -> int:
             "candidates": candidates,
         }
         print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    if args.command == "lore-search":
+        lore_result = search_lore_messages(args.query, max_results=args.max_results)
+        print(render_lore_json(lore_result), end="")
         return 0
     if args.command == "scorecard":
         scorecard = build_scorecard(".")

@@ -85,6 +85,12 @@ ARTIFACT_SCHEMAS: dict[str, JsonObject] = {
         "required_fields": [*_COMMON_REQUIRED_FIELDS, "provider", "subject", "source", "claims"],
         "hostile_fields": ["provider", "subject", "source", "claims"],
     },
+    "lore_search_result_set": {
+        "summary": "Bounded lore.kernel.org Atom search result with normalized message artifacts.",
+        "trust_boundaries": ["remote_archive_email_untrusted"],
+        "required_fields": [*_COMMON_REQUIRED_FIELDS, "query", "source_url", "messages"],
+        "hostile_fields": ["query", "source_url", "messages"],
+    },
 }
 
 

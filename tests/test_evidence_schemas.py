@@ -16,6 +16,7 @@ def test_schema_catalog_names_required_artifacts_and_trust_boundaries():
         "finding",
         "recommendation",
         "external_evidence_record",
+        "lore_search_result_set",
     }
     assert set(catalog["trust_boundary_labels"]) >= {
         "local_git_metadata_untrusted",
