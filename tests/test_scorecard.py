@@ -13,10 +13,10 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
     assert scorecard["schema_version"] == 1
     assert scorecard["review_posture"] == "metrics-are-steering-signals-not-product-claims"
     assert scorecard["counts"] == {
-        "supported_input_shapes": 5,
+        "supported_input_shapes": 6,
         "heuristic_findings": 13,
         "golden_cases": 3,
-        "schema_fields_with_evidence_references": 7,
+        "schema_fields_with_evidence_references": 9,
         "normalized_evidence_artifact_schemas": 7,
         "trust_boundary_labels": 5,
         "end_to_end_reviewer_examples": 3,
@@ -48,6 +48,7 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "explicit ordered local commit list",
         "local merge commit expansion",
         "single RFC822/mbox mailing-list message",
+        "normalized commit/message related-candidate scoring",
     ]
     assert scorecard["heuristic_findings"] == [
         "body-excerpt-truncated",
@@ -80,7 +81,7 @@ def test_scorecard_renderers_are_deterministic_and_human_readable():
 
     text = render_text(scorecard)
     assert "Review-signal scorecard" in text
-    assert "supported input shapes: 5" in text
+    assert "supported input shapes: 6" in text
     assert "heuristic findings: 13" in text
     assert "golden cases: 3" in text
     assert "normalized evidence artifact schemas: 7" in text

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+from pathlib import Path
 
 from .charter import summarize_goals
 from .commit_review import render_json as render_commit_json
@@ -23,6 +25,7 @@ from .range_review import (
 from .range_review import (
     render_text as render_range_text,
 )
+from .related_messages import find_related_message_candidates
 from .scorecard import build_scorecard
 from .scorecard import render_json as render_scorecard_json
 from .scorecard import render_text as render_scorecard_text
@@ -59,9 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
         "review-range",
         help="review a local git commit range or explicit commit list",
     )
-    review_range_parser.add_argument(
-        "--repo", required=True, help="path to a local git repository"
-    )
+    review_range_parser.add_argument("--repo", required=True, help="path to a local git repository")
     review_range_parser.add_argument(
         "--base", help="base commit SHA or revision, excluded from review"
     )
@@ -92,6 +93,30 @@ def build_parser() -> argparse.ArgumentParser:
         "--file", required=True, help="path to a local RFC822/mbox message file"
     )
     parse_message_parser.add_argument(
+        "--format",
+        choices=("json",),
+        default="json",
+        help="output format",
+    )
+    related_messages_parser = subparsers.add_parser(
+        "related-messages",
+        help="score candidate links between normalized commit and message artifacts",
+    )
+    related_messages_parser.add_argument(
+        "--commit-artifact",
+        action="append",
+        default=[],
+        required=True,
+        help="path to a normalized commit artifact JSON file; may be repeated",
+    )
+    related_messages_parser.add_argument(
+        "--message-artifact",
+        action="append",
+        default=[],
+        required=True,
+        help="path to a normalized mailing-list message artifact JSON file; may be repeated",
+    )
+    related_messages_parser.add_argument(
         "--format",
         choices=("json",),
         default="json",
@@ -156,6 +181,18 @@ def main(argv: list[str] | None = None) -> int:
         artifact = parse_mailing_list_message_file(args.file)
         print(render_message_json(artifact), end="")
         return 0
+    if args.command == "related-messages":
+        commit_artifacts = [_read_json_file(path) for path in args.commit_artifact]
+        message_artifacts = [_read_json_file(path) for path in args.message_artifact]
+        candidates = find_related_message_candidates(commit_artifacts, message_artifacts)
+        result = {
+            "artifact_type": "related_message_candidate_set",
+            "schema_version": 1,
+            "candidate_count": len(candidates),
+            "candidates": candidates,
+        }
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
     if args.command == "scorecard":
         scorecard = build_scorecard(".")
         if args.format == "json":
@@ -165,6 +202,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     parser.print_help()
     return 0
+
+
+def _read_json_file(path: str) -> dict[str, object]:
+    with Path(path).open(encoding="utf-8") as handle:
+        data = json.load(handle)
+    if not isinstance(data, dict):
+        raise ValueError(f"expected JSON object in {path}")
+    return data
 
 
 if __name__ == "__main__":  # pragma: no cover

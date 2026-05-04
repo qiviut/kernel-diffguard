@@ -16,6 +16,7 @@ SUPPORTED_INPUT_SHAPES = (
     "explicit ordered local commit list",
     "local merge commit expansion",
     "single RFC822/mbox mailing-list message",
+    "normalized commit/message related-candidate scoring",
 )
 
 HEURISTIC_FINDINGS = (
@@ -42,6 +43,8 @@ SCHEMA_FIELDS_WITH_EVIDENCE_REFERENCES = (
     "kernel_impact.evidence",
     "kernel_impact.retest_hints",
     "kernel_impact.uncertainty",
+    "related_message_candidate.match_evidence",
+    "related_message_candidate.total_evidence_score",
 )
 
 
@@ -61,9 +64,7 @@ def build_scorecard(project_root: Path | str) -> JsonObject:
             "supported_input_shapes": len(SUPPORTED_INPUT_SHAPES),
             "heuristic_findings": len(HEURISTIC_FINDINGS),
             "golden_cases": len(golden_cases),
-            "schema_fields_with_evidence_references": len(
-                SCHEMA_FIELDS_WITH_EVIDENCE_REFERENCES
-            ),
+            "schema_fields_with_evidence_references": len(SCHEMA_FIELDS_WITH_EVIDENCE_REFERENCES),
             "normalized_evidence_artifact_schemas": len(normalized_evidence_artifact_schemas),
             "trust_boundary_labels": len(trust_boundary_labels),
             "end_to_end_reviewer_examples": len(reviewer_examples),
