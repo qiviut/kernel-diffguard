@@ -29,6 +29,7 @@ HEURISTIC_FINDINGS = (
     "hostile-instruction-language",
     "linux-security-cue",
     "patch-content-present",
+    "discussion-signal-records-truncated",
     "prompt-injection-text",
     "removed-test",
     "suspicious-script-added",
@@ -46,8 +47,11 @@ SCHEMA_FIELDS_WITH_EVIDENCE_REFERENCES = (
     "kernel_impact.uncertainty",
     "commit_artifact.patch_id",
     "mailing_list_message_artifact.patch.patch_id",
+    "mailing_list_message_artifact.patch_series",
+    "mailing_list_message_artifact.discussion_signals",
     "related_message_candidate.match_evidence.patch-id",
     "related_message_candidate.match_evidence",
+    "related_message_candidate.discussion_signals",
     "related_message_candidate.total_evidence_score",
 )
 

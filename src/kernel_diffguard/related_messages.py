@@ -202,6 +202,7 @@ def _candidate(
         "commit_refs": [commit_ref],
         "message_refs": [message_ref],
         "match_evidence": match_evidence,
+        "discussion_signals": _discussion_signals_for_candidate(message),
         "total_evidence_score": sum(int(item["score"]) for item in match_evidence),
         "evidence_refs": [
             str(commit.get("evidence_refs", [commit_ref])[0]),
@@ -210,6 +211,23 @@ def _candidate(
         "trust_boundary": "derived_review_signal",
         "limits": _limits(max_candidates, omitted_record_count),
         "risk_hints": ["derived-from-hostile-git-and-email-input"],
+    }
+
+
+def _discussion_signals_for_candidate(message: JsonObject) -> JsonObject:
+    signals = message.get("discussion_signals")
+    if isinstance(signals, dict):
+        return {
+            "review_tags": list(signals.get("review_tags", [])),
+            "objections": list(signals.get("objections", [])),
+            "open_questions": list(signals.get("open_questions", [])),
+            "unresolved_markers": list(signals.get("unresolved_markers", [])),
+        }
+    return {
+        "review_tags": [],
+        "objections": [],
+        "open_questions": [],
+        "unresolved_markers": [],
     }
 
 

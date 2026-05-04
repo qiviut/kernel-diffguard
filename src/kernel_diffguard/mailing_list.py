@@ -26,6 +26,13 @@ _MAX_ATTACHMENT_SCAN_BYTES = 16_384
 _PATCH_ID_TIMEOUT_SECONDS = 5
 _URL_RE = re.compile(r"https?://[^\s<>()\[\]{}\"']+")
 _DIFF_PATH_RE = re.compile(r"^diff --git a/(.*?) b/(.*?)$", re.MULTILINE)
+_REVIEW_TAG_RE = re.compile(r"^(Reviewed-by|Acked-by|Tested-by):\s*(.+)$", re.IGNORECASE)
+_OBJECTION_RE = re.compile(r"^(NAK|NACK|Rejected-by):\s*(.+)$", re.IGNORECASE)
+_UNRESOLVED_RE = re.compile(
+    r"\b(unresolved|not\s+resolved|still\s+open|not\s+addressed|needs\s+v\d+)\b",
+    re.IGNORECASE,
+)
+_PATCH_SUBJECT_RE = re.compile(r"\[((?:[^\]]*\b)?(?:PATCH|RFC)[^\]]*)\]", re.IGNORECASE)
 _EXECUTABLE_SNIPPET_RE = re.compile(
     r"(^#!\s*/|\b(?:curl|wget)\b[^\n|]*(?:\|\s*(?:sh|bash))|\brm\s+-rf\b|\bsudo\b)",
     re.IGNORECASE | re.MULTILINE,
@@ -58,6 +65,9 @@ def parse_mailing_list_message(
     attachments, omitted_attachment_records = _attachments(message)
     risk_hints = _risk_hints(message, plain_text_excerpt, body_truncated)
     patch, omitted_patch_paths = _patch_facts(patch_text)
+    discussion_signals, omitted_discussion_signal_records = _discussion_signals(
+        raw_bytes.decode("utf-8", errors="replace")
+    )
     if patch["has_patch"]:
         risk_hints.append("patch-content-present")
     if omitted_url_records:
@@ -66,6 +76,8 @@ def parse_mailing_list_message(
         risk_hints.append("attachment-records-truncated")
     if omitted_patch_paths:
         risk_hints.append("patch-path-records-truncated")
+    if omitted_discussion_signal_records:
+        risk_hints.append("discussion-signal-records-truncated")
     header_truncated_count = sum(
         [
             message_id_truncated,
@@ -89,6 +101,7 @@ def parse_mailing_list_message(
         + omitted_url_records
         + omitted_attachment_records
         + omitted_patch_paths
+        + omitted_discussion_signal_records
         + omitted_header_records
     )
     truncated = bool(omitted_record_count)
@@ -105,10 +118,12 @@ def parse_mailing_list_message(
         "cc": cc_addrs,
         "list_ids": list_ids,
         "subject": subject,
+        "patch_series": _patch_series(subject),
         "in_reply_to": in_reply_to,
         "references": references,
         "plain_text_excerpt": plain_text_excerpt,
         "patch": patch,
+        "discussion_signals": discussion_signals,
         "attachments": attachments,
         "urls": urls,
         "domains": _domains(urls),
@@ -124,6 +139,7 @@ def parse_mailing_list_message(
             "omitted_url_record_count": omitted_url_records,
             "omitted_attachment_record_count": omitted_attachment_records,
             "omitted_patch_path_count": omitted_patch_paths,
+            "omitted_discussion_signal_record_count": omitted_discussion_signal_records,
             "omitted_header_record_count": omitted_header_records,
         },
         "risk_hints": sorted(set(risk_hints)),
@@ -273,6 +289,30 @@ def _message_id_list(value: str) -> tuple[list[str], int]:
     return _cap_list(re.findall(r"<[^>]+>", value))
 
 
+def _patch_series(subject: str) -> JsonObject:
+    match = _PATCH_SUBJECT_RE.search(subject)
+    if not match:
+        return {
+            "is_patch": False,
+            "revision": None,
+            "series_position": None,
+            "series_total": None,
+            "is_cover_letter": False,
+        }
+    marker = match.group(1)
+    revision_match = re.search(r"\bv(\d+)\b", marker, re.IGNORECASE)
+    position_match = re.search(r"\b(\d+)/(\d+)\b", marker)
+    series_position = int(position_match.group(1)) if position_match else None
+    series_total = int(position_match.group(2)) if position_match else None
+    return {
+        "is_patch": True,
+        "revision": int(revision_match.group(1)) if revision_match else 1,
+        "series_position": series_position,
+        "series_total": series_total,
+        "is_cover_letter": series_position == 0 or "cover letter" in subject.lower(),
+    }
+
+
 def _normalized_date(value: str | None) -> str:
     if not value:
         return ""
@@ -333,6 +373,65 @@ def _patch_facts(text: str) -> tuple[JsonObject, int]:
         "touched_paths": touched_paths,
         "patch_id": _stable_patch_id(text) if has_diff else "",
     }, omitted_paths
+
+
+def _discussion_signals(raw_text: str) -> tuple[JsonObject, int]:
+    review_tags: list[JsonObject] = []
+    objections: list[JsonObject] = []
+    open_questions: list[JsonObject] = []
+    unresolved_markers: list[JsonObject] = []
+    omitted_records = 0
+
+    for line_number, line in enumerate(raw_text.splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        evidence_ref = f"mail:line:{line_number}"
+        review_tag_match = _REVIEW_TAG_RE.match(stripped)
+        if review_tag_match:
+            omitted_records += _append_capped(
+                review_tags,
+                {
+                    "kind": review_tag_match.group(1).lower(),
+                    "value": _bounded_header(review_tag_match.group(2))[0],
+                    "evidence_ref": evidence_ref,
+                },
+            )
+            continue
+        objection_match = _OBJECTION_RE.match(stripped)
+        if objection_match:
+            omitted_records += _append_capped(
+                objections,
+                {
+                    "kind": objection_match.group(1).lower(),
+                    "excerpt": _bounded_header(stripped)[0],
+                    "evidence_ref": evidence_ref,
+                },
+            )
+        if stripped.endswith("?"):
+            omitted_records += _append_capped(
+                open_questions,
+                {"excerpt": _bounded_header(stripped)[0], "evidence_ref": evidence_ref},
+            )
+        if _UNRESOLVED_RE.search(stripped):
+            omitted_records += _append_capped(
+                unresolved_markers,
+                {"excerpt": _bounded_header(stripped)[0], "evidence_ref": evidence_ref},
+            )
+
+    return {
+        "review_tags": review_tags,
+        "objections": objections,
+        "open_questions": open_questions,
+        "unresolved_markers": unresolved_markers,
+    }, omitted_records
+
+
+def _append_capped(records: list[JsonObject], record: JsonObject) -> int:
+    if len(records) >= _MAX_DERIVED_RECORDS:
+        return 1
+    records.append(record)
+    return 0
 
 
 def _stable_patch_id(diff_text: str) -> str:

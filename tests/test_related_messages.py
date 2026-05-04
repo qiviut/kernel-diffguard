@@ -54,6 +54,11 @@ Subject: Re: [PATCH v2] net: fix guard packet accounting
 Content-Type: text/plain; charset=utf-8
 
 Looks related to the packet accounting fix.
+Acked-by: Reviewer <reviewer@example.test>
+Tested-by: Lab Bot <lab@example.test>
+NAK: please explain teardown ordering.
+Is this safe with old firmware?
+This remains unresolved until v3.
 
 diff --git a/net/core/dev.c b/net/core/dev.c
 +changed
@@ -94,6 +99,7 @@ No shared path or subject.
         "git:commit:abc123def456",
         "mail:message-id:<net-fix@example.test>",
     ]
+    assert candidate["discussion_signals"] == related_message["discussion_signals"]
 
 
 def test_related_message_search_bounds_hostile_candidate_fanout():

@@ -14,9 +14,9 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
     assert scorecard["review_posture"] == "metrics-are-steering-signals-not-product-claims"
     assert scorecard["counts"] == {
         "supported_input_shapes": 7,
-        "heuristic_findings": 13,
+        "heuristic_findings": 14,
         "golden_cases": 3,
-        "schema_fields_with_evidence_references": 12,
+        "schema_fields_with_evidence_references": 15,
         "normalized_evidence_artifact_schemas": 8,
         "trust_boundary_labels": 5,
         "end_to_end_reviewer_examples": 3,
@@ -61,6 +61,7 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "hostile-instruction-language",
         "linux-security-cue",
         "patch-content-present",
+        "discussion-signal-records-truncated",
         "prompt-injection-text",
         "removed-test",
         "suspicious-script-added",
@@ -84,9 +85,9 @@ def test_scorecard_renderers_are_deterministic_and_human_readable():
     text = render_text(scorecard)
     assert "Review-signal scorecard" in text
     assert "supported input shapes: 7" in text
-    assert "heuristic findings: 13" in text
+    assert "heuristic findings: 14" in text
     assert "golden cases: 3" in text
-    assert "schema fields with evidence references: 12" in text
+    assert "schema fields with evidence references: 15" in text
     assert "normalized evidence artifact schemas: 8" in text
     assert "trust boundary labels: 5" in text
     assert "feature changes require a scorecard delta" in text
