@@ -78,7 +78,9 @@ not replace this contract.
 
 ## Result vocabulary
 
-Initial named-check results should use this vocabulary:
+Initial named-check results should use the `expert_check_result` artifact defined
+in `src/kernel_diffguard/evidence_schema.py` and documented in
+`docs/normalized-evidence-schemas.md`. The closed vocabulary is:
 
 - satisfied: evidence shows the review obligation is met.
 - violated: evidence shows the obligation is not met and needs human attention.

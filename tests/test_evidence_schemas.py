@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from kernel_diffguard.evidence_schema import build_schema_catalog, validate_schema_fixture
+from kernel_diffguard.evidence_schema import (
+    CHECK_RESULT_STATUSES,
+    build_schema_catalog,
+    validate_schema_fixture,
+)
 
 
 def test_schema_catalog_names_required_artifacts_and_trust_boundaries():
@@ -21,6 +25,9 @@ def test_schema_catalog_names_required_artifacts_and_trust_boundaries():
         "github_commit_materialization",
         "github_pull_request_source",
         "github_pull_request_materialization",
+        "named_expert_check",
+        "expert_check_result",
+        "exception_record",
     }
     assert set(catalog["trust_boundary_labels"]) >= {
         "local_git_metadata_untrusted",
@@ -197,10 +204,100 @@ def test_schema_fixture_validation_accepts_representative_artifacts():
                 "limits": {"truncated": False, "omitted_record_count": 0},
                 "risk_hints": ["not-verdict"],
             },
+            {
+                "artifact_type": "named_expert_check",
+                "id": "named-check:KDG-CHECK-REMOVED-TEST",
+                "check_id": "KDG-CHECK-REMOVED-TEST",
+                "expert_question": "UQ-004",
+                "classification": "generic",
+                "applies_to": ["commit", "range", "github_pull_request"],
+                "evidence_consumed": ["finding:removed-test", "commit_artifact.path_changes"],
+                "status_conditions": {
+                    "satisfied": "replacement coverage or accepted exception is present",
+                    "violated": "test removal lacks replacement coverage or exception",
+                    "missing_evidence": (
+                        "replacement coverage and exception evidence were not collected"
+                    ),
+                    "not_applicable": "no test removal evidence applies",
+                    "inconclusive": "bounded diff cannot distinguish deletion from move",
+                },
+                "required_next_action": "Provide replacement coverage or a scoped exception.",
+                "rationale": "Removed tests weaken feedback loops.",
+                "limitations": "Does not prove full semantic coverage.",
+                "evidence_refs": ["docs:named-expert-checks.md#KDG-CHECK-REMOVED-TEST"],
+                "trust_boundary": "derived_review_signal",
+                "limits": {"truncated": False, "omitted_record_count": 0},
+                "risk_hints": ["named-check-contract-not-verdict"],
+            },
+            {
+                "artifact_type": "expert_check_result",
+                "id": "check-result:removed-test:abc123",
+                "check_id": "KDG-CHECK-REMOVED-TEST",
+                "expert_question": "UQ-004",
+                "status": "missing_evidence",
+                "subject": {"kind": "commit", "id": "abc123", "path": "tests/test_guard.py"},
+                "missing_evidence": ["replacement coverage", "accepted exception"],
+                "required_next_action": "Provide replacement coverage or a scoped exception.",
+                "rationale": "The commit removed a test and no replacement evidence was present.",
+                "limitations": "Fixture does not run semantic coverage analysis.",
+                "evidence_refs": ["finding:removed-test", "path:tests/test_guard.py"],
+                "trust_boundary": "derived_review_signal",
+                "limits": {"truncated": False, "omitted_record_count": 0},
+                "risk_hints": ["human-review-required", "not-maliciousness-verdict"],
+            },
+            {
+                "artifact_type": "exception_record",
+                "id": "exception:removed-test:fixture",
+                "exception_id": "exception:removed-test:fixture",
+                "scope": {"kind": "fixture", "id": "abc123"},
+                "applies_to_check_ids": ["KDG-CHECK-REMOVED-TEST"],
+                "rationale": "Fixture demonstrates explicit exception shape.",
+                "approver": "fixture-maintainer",
+                "expires_or_review_by": "before-release",
+                "compensating_controls": ["manual regression checklist"],
+                "evidence_refs": ["check-result:removed-test:abc123"],
+                "trust_boundary": "derived_review_signal",
+                "limits": {"truncated": False, "omitted_record_count": 0},
+                "risk_hints": ["exception-is-explicit-not-safe-by-default"],
+            },
         ],
     }
 
     assert validate_schema_fixture(fixture) == []
+
+
+def test_check_result_statuses_are_closed_and_invalid_statuses_fail():
+    assert CHECK_RESULT_STATUSES == (
+        "satisfied",
+        "violated",
+        "missing_evidence",
+        "not_applicable",
+        "inconclusive",
+    )
+
+    fixture = {
+        "schema_version": 1,
+        "artifacts": [
+            {
+                "artifact_type": "expert_check_result",
+                "id": "check-result:bad-status",
+                "check_id": "KDG-CHECK-REMOVED-TEST",
+                "expert_question": "UQ-004",
+                "status": "suspicious",
+                "subject": {"kind": "commit", "id": "abc123"},
+                "missing_evidence": [],
+                "required_next_action": "Do not use suspicious scoring.",
+                "rationale": "Fixture should fail closed.",
+                "limitations": "Invalid status is intentionally rejected.",
+                "evidence_refs": ["finding:removed-test"],
+                "trust_boundary": "derived_review_signal",
+                "limits": {"truncated": False, "omitted_record_count": 0},
+                "risk_hints": [],
+            }
+        ],
+    }
+
+    assert validate_schema_fixture(fixture) == ["artifacts[0].status is unknown: suspicious"]
 
 
 def test_schema_fixture_validation_rejects_missing_evidence_and_unknown_boundaries():

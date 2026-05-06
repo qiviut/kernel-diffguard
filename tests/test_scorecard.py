@@ -17,13 +17,15 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "heuristic_findings": 14,
         "golden_cases": 3,
         "schema_fields_with_evidence_references": 15,
-        "normalized_evidence_artifact_schemas": 12,
+        "normalized_evidence_artifact_schemas": 15,
         "trust_boundary_labels": 6,
         "end_to_end_reviewer_examples": 3,
     }
     assert scorecard["normalized_evidence_artifact_schemas"] == [
         "commit_artifact",
         "commit_range_manifest",
+        "exception_record",
+        "expert_check_result",
         "external_evidence_record",
         "finding",
         "github_commit_materialization",
@@ -32,6 +34,7 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "github_pull_request_source",
         "lore_search_result_set",
         "mailing_list_message_artifact",
+        "named_expert_check",
         "recommendation",
         "related_message_candidate",
     ]
@@ -95,7 +98,7 @@ def test_scorecard_renderers_are_deterministic_and_human_readable():
     assert "heuristic findings: 14" in text
     assert "golden cases: 3" in text
     assert "schema fields with evidence references: 15" in text
-    assert "normalized evidence artifact schemas: 12" in text
+    assert "normalized evidence artifact schemas: 15" in text
     assert "trust boundary labels: 6" in text
     assert "feature changes require a scorecard delta" in text
 
