@@ -115,11 +115,16 @@ def test_materialize_github_pull_request_source_resolves_ordered_commits_without
 
 def test_review_github_pull_request_reuses_range_review_over_resolved_commits(tmp_path: Path):
     remote_work = make_repo(tmp_path)
+    (remote_work / ".github" / "workflows").mkdir(parents=True)
+    (remote_work / ".github" / "workflows" / "ci.yml").write_text(
+        "name: CI\nsteps:\n  - run: pytest\n  - run: ruff check .\n"
+    )
     (remote_work / "README.md").write_text("base\n")
     base_sha = commit_all(remote_work, "base")
-    (remote_work / ".github" / "workflows").mkdir(parents=True)
-    (remote_work / ".github" / "workflows" / "ci.yml").write_text("name: CI\n")
-    first_sha = commit_all(remote_work, "ci: add workflow")
+    (remote_work / ".github" / "workflows" / "ci.yml").write_text(
+        "name: CI\nsteps:\n  - run: pytest\n"
+    )
+    first_sha = commit_all(remote_work, "ci: simplify workflow")
     (remote_work / "drivers" / "net.c").parent.mkdir(parents=True, exist_ok=True)
     (remote_work / "drivers" / "net.c").write_text("int driver(void) { return 0; }\n")
     second_sha = commit_all(remote_work, "drivers: add network driver")
