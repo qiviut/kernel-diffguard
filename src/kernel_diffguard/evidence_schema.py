@@ -10,6 +10,7 @@ TRUST_BOUNDARY_LABELS = (
     "local_git_metadata_untrusted",
     "local_git_diff_untrusted",
     "remote_archive_email_untrusted",
+    "remote_github_metadata_untrusted",
     "external_evidence_snapshot_untrusted",
     "derived_review_signal",
 )
@@ -93,6 +94,32 @@ ARTIFACT_SCHEMAS: dict[str, JsonObject] = {
         "trust_boundaries": ["remote_archive_email_untrusted"],
         "required_fields": [*_COMMON_REQUIRED_FIELDS, "query", "source_url", "messages"],
         "hostile_fields": ["query", "source_url", "messages"],
+    },
+    "github_commit_source": {
+        "summary": "Parsed immutable GitHub-hosted commit source before network fetch.",
+        "trust_boundaries": ["remote_github_metadata_untrusted"],
+        "required_fields": [
+            *_COMMON_REQUIRED_FIELDS,
+            "owner",
+            "repo",
+            "commit",
+            "source",
+            "clone_url",
+        ],
+        "hostile_fields": ["owner", "repo", "commit", "source", "clone_url"],
+    },
+    "github_commit_materialization": {
+        "summary": "Controlled bare-cache fetch of one immutable GitHub-hosted commit.",
+        "trust_boundaries": ["remote_github_metadata_untrusted", "local_git_metadata_untrusted"],
+        "required_fields": [
+            *_COMMON_REQUIRED_FIELDS,
+            "repo_identity",
+            "commit",
+            "local_repo",
+            "source",
+            "provenance",
+        ],
+        "hostile_fields": ["repo_identity", "commit", "source", "provenance"],
     },
 }
 

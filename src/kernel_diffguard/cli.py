@@ -11,6 +11,7 @@ from .charter import summarize_goals
 from .commit_review import render_json as render_commit_json
 from .commit_review import render_text as render_commit_text
 from .commit_review import review_commit
+from .github_source import GitHubSourceError, review_github_commit
 from .lore import render_json as render_lore_json
 from .lore import search_lore_messages
 from .mailing_list import parse_mailing_list_message_file
@@ -55,6 +56,27 @@ def build_parser() -> argparse.ArgumentParser:
         "--commit", required=True, help="commit SHA or revision to review"
     )
     review_commit_parser.add_argument(
+        "--format",
+        choices=("json", "text"),
+        default="text",
+        help="output format",
+    )
+    review_github_parser = subparsers.add_parser(
+        "review-github-commit",
+        help="fetch one immutable GitHub commit into a controlled cache and review it",
+    )
+    review_github_parser.add_argument(
+        "--source",
+        required=True,
+        help="GitHub commit URL or OWNER/REPO@FULL_SHA",
+    )
+    review_github_parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=Path(".kdiffguard/github-cache"),
+        help="controlled bare git cache directory",
+    )
+    review_github_parser.add_argument(
         "--format",
         choices=("json", "text"),
         default="text",
@@ -162,6 +184,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "review-commit":
         review = review_commit(args.repo, args.commit)
+        if args.format == "json":
+            print(render_commit_json(review), end="")
+        else:
+            print(render_commit_text(review))
+        return 0
+    if args.command == "review-github-commit":
+        try:
+            review = review_github_commit(args.source, cache_dir=args.cache_dir)
+        except GitHubSourceError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
         if args.format == "json":
             print(render_commit_json(review), end="")
         else:

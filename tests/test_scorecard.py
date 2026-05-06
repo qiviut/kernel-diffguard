@@ -13,12 +13,12 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
     assert scorecard["schema_version"] == 1
     assert scorecard["review_posture"] == "metrics-are-steering-signals-not-product-claims"
     assert scorecard["counts"] == {
-        "supported_input_shapes": 7,
+        "supported_input_shapes": 8,
         "heuristic_findings": 14,
         "golden_cases": 3,
         "schema_fields_with_evidence_references": 15,
-        "normalized_evidence_artifact_schemas": 8,
-        "trust_boundary_labels": 5,
+        "normalized_evidence_artifact_schemas": 10,
+        "trust_boundary_labels": 6,
         "end_to_end_reviewer_examples": 3,
     }
     assert scorecard["normalized_evidence_artifact_schemas"] == [
@@ -26,6 +26,8 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "commit_range_manifest",
         "external_evidence_record",
         "finding",
+        "github_commit_materialization",
+        "github_commit_source",
         "lore_search_result_set",
         "mailing_list_message_artifact",
         "recommendation",
@@ -37,6 +39,7 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "local_git_diff_untrusted",
         "local_git_metadata_untrusted",
         "remote_archive_email_untrusted",
+        "remote_github_metadata_untrusted",
     ]
     assert scorecard["iteration_value_policy"] == {
         "feature_changes_require_scorecard_delta": True,
@@ -51,6 +54,7 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "single RFC822/mbox mailing-list message",
         "normalized commit/message related-candidate scoring",
         "lore.kernel.org Atom search to normalized message artifacts",
+        "GitHub-hosted immutable commit input",
     ]
     assert scorecard["heuristic_findings"] == [
         "body-excerpt-truncated",
@@ -84,12 +88,12 @@ def test_scorecard_renderers_are_deterministic_and_human_readable():
 
     text = render_text(scorecard)
     assert "Review-signal scorecard" in text
-    assert "supported input shapes: 7" in text
+    assert "supported input shapes: 8" in text
     assert "heuristic findings: 14" in text
     assert "golden cases: 3" in text
     assert "schema fields with evidence references: 15" in text
-    assert "normalized evidence artifact schemas: 8" in text
-    assert "trust boundary labels: 5" in text
+    assert "normalized evidence artifact schemas: 10" in text
+    assert "trust boundary labels: 6" in text
     assert "feature changes require a scorecard delta" in text
 
 

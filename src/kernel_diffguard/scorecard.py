@@ -18,6 +18,7 @@ SUPPORTED_INPUT_SHAPES = (
     "single RFC822/mbox mailing-list message",
     "normalized commit/message related-candidate scoring",
     "lore.kernel.org Atom search to normalized message artifacts",
+    "GitHub-hosted immutable commit input",
 )
 
 HEURISTIC_FINDINGS = (
