@@ -11,6 +11,7 @@ from .charter import summarize_goals
 from .commit_review import render_json as render_commit_json
 from .commit_review import render_text as render_commit_text
 from .commit_review import review_commit
+from .github_pr import GitHubPullRequestError, review_github_pull_request
 from .github_source import GitHubSourceError, review_github_commit
 from .lore import render_json as render_lore_json
 from .lore import search_lore_messages
@@ -77,6 +78,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="controlled bare git cache directory",
     )
     review_github_parser.add_argument(
+        "--format",
+        choices=("json", "text"),
+        default="text",
+        help="output format",
+    )
+    review_github_pr_parser = subparsers.add_parser(
+        "review-github-pr",
+        help="resolve one GitHub pull request and emit a read-only range review",
+    )
+    review_github_pr_parser.add_argument(
+        "--source",
+        required=True,
+        help="GitHub PR URL or OWNER/REPO#NUMBER",
+    )
+    review_github_pr_parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=Path(".kdiffguard/github-cache"),
+        help="controlled bare git cache directory",
+    )
+    review_github_pr_parser.add_argument(
         "--format",
         choices=("json", "text"),
         default="text",
@@ -199,6 +221,17 @@ def main(argv: list[str] | None = None) -> int:
             print(render_commit_json(review), end="")
         else:
             print(render_commit_text(review))
+        return 0
+    if args.command == "review-github-pr":
+        try:
+            review = review_github_pull_request(args.source, cache_dir=args.cache_dir)
+        except GitHubPullRequestError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        if args.format == "json":
+            print(render_range_json(review), end="")
+        else:
+            print(render_range_text(review))
         return 0
     if args.command == "review-range":
         try:

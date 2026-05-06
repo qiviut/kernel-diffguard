@@ -37,6 +37,7 @@ Early CLI and regression skeleton are in place. The current deterministic review
 
 - review one local commit with `kdiffguard review-commit --repo PATH --commit SHA --format json|text`,
 - review one immutable GitHub-hosted commit with `kdiffguard review-github-commit --source OWNER/REPO@FULL_SHA --format json|text`,
+- review a GitHub pull request read-only with `kdiffguard review-github-pr --source OWNER/REPO#NUMBER --format json|text`,
 - review a local base-exclusive/target-inclusive range with `kdiffguard review-range --repo PATH --base X --target Y --format json|text`,
 - review an explicit ordered commit list with `kdiffguard review-range --repo PATH --commit SHA --commit SHA --format json|text`,
 - run golden analysis regression cases with `scripts/run-golden-analysis.sh`, and

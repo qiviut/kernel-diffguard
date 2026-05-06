@@ -13,11 +13,11 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
     assert scorecard["schema_version"] == 1
     assert scorecard["review_posture"] == "metrics-are-steering-signals-not-product-claims"
     assert scorecard["counts"] == {
-        "supported_input_shapes": 8,
+        "supported_input_shapes": 9,
         "heuristic_findings": 14,
         "golden_cases": 3,
         "schema_fields_with_evidence_references": 15,
-        "normalized_evidence_artifact_schemas": 10,
+        "normalized_evidence_artifact_schemas": 12,
         "trust_boundary_labels": 6,
         "end_to_end_reviewer_examples": 3,
     }
@@ -28,6 +28,8 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "finding",
         "github_commit_materialization",
         "github_commit_source",
+        "github_pull_request_materialization",
+        "github_pull_request_source",
         "lore_search_result_set",
         "mailing_list_message_artifact",
         "recommendation",
@@ -55,6 +57,7 @@ def test_scorecard_counts_current_reviewer_value_dimensions():
         "normalized commit/message related-candidate scoring",
         "lore.kernel.org Atom search to normalized message artifacts",
         "GitHub-hosted immutable commit input",
+        "GitHub pull request read-only review",
     ]
     assert scorecard["heuristic_findings"] == [
         "body-excerpt-truncated",
@@ -88,11 +91,11 @@ def test_scorecard_renderers_are_deterministic_and_human_readable():
 
     text = render_text(scorecard)
     assert "Review-signal scorecard" in text
-    assert "supported input shapes: 8" in text
+    assert "supported input shapes: 9" in text
     assert "heuristic findings: 14" in text
     assert "golden cases: 3" in text
     assert "schema fields with evidence references: 15" in text
-    assert "normalized evidence artifact schemas: 10" in text
+    assert "normalized evidence artifact schemas: 12" in text
     assert "trust boundary labels: 6" in text
     assert "feature changes require a scorecard delta" in text
 
