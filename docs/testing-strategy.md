@@ -1,6 +1,6 @@
 # Testing strategy
 
-kernel-diffguard should test for reviewer value, not just line coverage. The suite should prove that hostile git, GitHub, and mailing-list inputs are reduced into bounded, evidence-linked reviewer artifacts without pretending to prove that a change is safe or malicious.
+kernel-diffguard should test for reviewer value, not just line coverage. The suite should prove that hostile git, GitHub, and mailing-list inputs are reduced into bounded, evidence-linked reviewer artifacts and, as the project matures, checked against explicit operating-envelope policies without pretending to prove that a change is safe or malicious.
 
 The default path is deterministic and local-first: fast unit tests, synthetic integration tests, golden review-packet fixtures, and optional public-data smoke tests that never block ordinary pull-request CI. In this document, default CI means the normal pull-request and push gate.
 
@@ -53,6 +53,7 @@ Unit tests should cover these source-review components as they appear:
 | Email parsing | RFC822 headers, multipart bodies, patch presence, huge bodies, malformed headers | local `.eml`/mbox fixtures |
 | Prompt-injection hints | hostile instructions in commit messages, diffs, path names, PR text, and email bodies | bounded text literals and fixture commits |
 | Static review rules | removed tests, CI/static-analysis weakening, suspicious executable additions, warning-policy changes, high-risk kernel paths, oversized diffs | fixture commits with positive and non-triggering variants |
+| Operating-envelope policies | policy applicability, satisfied/violated/missing-evidence/not-applicable/inconclusive statuses, exception handling, evidence refs | small policy files plus synthetic commits/ranges/PRs |
 | Kernel impact hints | Kconfig, drivers, arch, syscall/ABI, filesystem, networking, scheduler, memory-management, security-sensitive surfaces | path lists plus synthetic commits |
 | Review packet rendering | JSON/text stability, deterministic sorting, evidence links, retest hints | CLI output fixtures |
 
@@ -82,6 +83,7 @@ A golden case captures a specific analysis result that has become valuable enoug
   - GitHub owner/repo PR number plus pinned base/head SHAs;
 - command used to generate the result;
 - expected normalized JSON output;
+- expected policy check results once an operating-envelope policy applies;
 - allowed volatile fields to ignore or normalize;
 - rationale explaining why the expected result is useful.
 
@@ -94,9 +96,12 @@ Golden fixtures should cover easy-win reviewer signals, including:
 - high-risk kernel paths;
 - oversized diffs;
 - Linux kernel impact hints and retest guidance;
-- range-local author, path-prefix, and co-change summaries.
+- range-local author, path-prefix, and co-change summaries;
+- first operating-envelope checks, especially removed-test, CI/static-analysis gate, high-authority executable, generated/source correspondence, and simple kernel retest-obligation policies.
 
 The comparison should be strict for reviewer-facing facts and findings, but tolerant of deliberately volatile metadata such as runtime duration, cache path, tool version banner, and fetch timestamp.
+
+Policy-result comparison should be stricter than heuristic-signal comparison: policy ID, applicability, status, evidence references, missing evidence, and required next action are reviewer-facing contract output. If a policy changes, update the golden result with an explicit rationale rather than letting output drift silently.
 
 When a golden output changes, CI should make the change easy to review. The diff should separate:
 
@@ -105,6 +110,7 @@ When a golden output changes, CI should make the change easy to review. The diff
 - removed findings;
 - changed severity/uncertainty;
 - changed evidence references;
+- changed policy results and missing-evidence obligations;
 - allowed metadata drift.
 
 A changed golden result is not automatically bad. It means one of two things happened:
@@ -131,6 +137,8 @@ Each implementation iteration should improve at least one observable dimension u
 - supported input shapes;
 - parser capability;
 - deterministic heuristic findings;
+- explicit operating-envelope policy coverage;
+- policy check result evidence traceability;
 - prompt-injection/hostile-input coverage;
 - golden case count;
 - evidence traceability;
