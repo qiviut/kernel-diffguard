@@ -24,8 +24,9 @@ The Linux kernel is the first exemplar because it has scale, subsystem structure
 4. Range impact analyzer
    - Turns X..Y into changed files, symbols when available, configs, subsystems, and likely runtime surfaces.
    - Produces retest recommendations tied to evidence.
-5. Operating-envelope policy engine
-   - Applies explicit allow-list-style policies over normalized evidence.
+5. Expert-question and operating-envelope checker
+   - Starts from cataloged security-review questions and maps them to bounded evidence.
+   - Applies explicit named checks or allow-list-style policies over normalized evidence.
    - Emits check results such as satisfied, violated, missing evidence, not applicable, and inconclusive.
    - Treats historical baselines as candidate-policy input, never as a hidden anomaly detector or trust oracle.
 6. Provenance and integrity analyzer
@@ -52,7 +53,7 @@ The Linux kernel is the first exemplar because it has scale, subsystem structure
 - Hostile remote input: GitHub PR titles, descriptions, comments, labels, branch names, user/profile fields, API metadata, rendered HTML, and downloadable patches.
 - Hostile external evidence: OpenSSF/provider snapshots, SBOM/advisory/provenance/signature metadata, provider scores, graph records, and vulnerability/exploitability statements.
 - Deterministic low-privilege zone: parsers, reducers, hashing, object inspection, snapshot loading, and schema normalization.
-- Operating-envelope zone: explicit policies and logical checks over reduced evidence. This zone can conclude that a rule is satisfied, violated, missing evidence, not applicable, or inconclusive; it should not silently infer probabilistic maliciousness from statistical abnormality.
+- Expert-question / operating-envelope zone: explicit review questions, named checks, policies, and logical checks over reduced evidence. This zone can conclude that a question or rule is answered, satisfied, violated, missing evidence, not applicable, or inconclusive; it should not silently infer probabilistic maliciousness from statistical abnormality.
 - Heuristic/model-assisted zone: summarization, candidate-policy explanation, and semantic patch review. This zone receives reduced evidence and policy results, not raw unbounded hostile input by default.
 - Human decision zone: final trust and release decisions remain explicit human/organization policy decisions.
 

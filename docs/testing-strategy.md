@@ -53,6 +53,7 @@ Unit tests should cover these source-review components as they appear:
 | Email parsing | RFC822 headers, multipart bodies, patch presence, huge bodies, malformed headers | local `.eml`/mbox fixtures |
 | Prompt-injection hints | hostile instructions in commit messages, diffs, path names, PR text, and email bodies | bounded text literals and fixture commits |
 | Static review rules | removed tests, CI/static-analysis weakening, suspicious executable additions, warning-policy changes, high-risk kernel paths, oversized diffs | fixture commits with positive and non-triggering variants |
+| Expert operating questions | question IDs, classifications, downstream bead links, non-goals, and no-DSL/no-anomaly guardrails | documentation guard tests and future schema fixtures |
 | Operating-envelope policies | policy applicability, satisfied/violated/missing-evidence/not-applicable/inconclusive statuses, exception handling, evidence refs | small policy files plus synthetic commits/ranges/PRs |
 | Kernel impact hints | Kconfig, drivers, arch, syscall/ABI, filesystem, networking, scheduler, memory-management, security-sensitive surfaces | path lists plus synthetic commits |
 | Review packet rendering | JSON/text stability, deterministic sorting, evidence links, retest hints | CLI output fixtures |

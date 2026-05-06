@@ -174,3 +174,51 @@ def test_normalized_evidence_schema_doc_covers_artifacts_and_boundaries():
     ]
     for term in required_terms:
         assert term in schema_doc
+
+
+def test_expert_operating_questions_catalog_covers_onboarding_review_questions():
+    catalog = Path("docs/expert-operating-questions.md").read_text(encoding="utf-8")
+
+    required_sections = [
+        "## Goal / problem framing",
+        "## Classification",
+        "## Universal repository-security questions",
+        "## Candidate Linux-kernel questions",
+        "## Questions that require more codebase experience",
+        "## Relationship to downstream Beads",
+        "## Non-goals",
+    ]
+    for section in required_sections:
+        assert section in catalog
+
+    required_questions = [
+        "UQ-001: What authority boundary did this change touch?",
+        "UQ-002: Which invariant does this subsystem or process appear to rely on?",
+        "UQ-003: Is this change modifying policy, enforcement, setup, use, or",
+        "UQ-004: Are tests, CI, static analysis, warnings, fuzzing, or sanitizers",
+        "UQ-005: Are generated artifacts changing with corresponding source,",
+        "UQ-006: Did this change add or modify high-authority executable code?",
+        "UQ-007: Is risky behavior split across commits, files, or review surfaces?",
+        "UQ-008: Does the change match its stated purpose without hiding semantic",
+        "UQ-009: What evidence would make this change acceptable?",
+        "UQ-010: What exception would a responsible maintainer have to write down?",
+        "KQ-001: Does this touch a kernel authority or isolation boundary?",
+        "CQ-001: What subsystem-specific invariants are maintainers relying on here?",
+    ]
+    for question in required_questions:
+        assert question in catalog
+
+    required_terms = [
+        "generic",
+        "candidate kernel-specific",
+        "requires more codebase experience",
+        "not a policy DSL",
+        "Do not invent a broad policy DSL",
+        "Do not produce anomaly scores",
+        "hostile commit messages",
+        "kernel-diffguard-2td",
+        "kernel-diffguard-ngj",
+        "kernel-diffguard-ehv",
+    ]
+    for term in required_terms:
+        assert term in catalog
