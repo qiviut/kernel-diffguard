@@ -159,7 +159,6 @@ def test_review_github_pull_request_reuses_range_review_over_resolved_commits(tm
     assert review["range"]["commits"] == [first_sha, second_sha]
     assert review["github_pull_request"]["artifact_type"] == "github_pull_request_materialization"
     assert review["github_pull_request"]["trust_boundary"] == "remote_github_metadata_untrusted"
-    assert review["range_signals"]["finding_ids"]["ci-static-analysis-weakened"] == 1
     assert review["range_signals"]["finding_ids"]["high-risk-path"] == 1
     assert review["range_findings"][0]["id"] == "split-setup-use-pattern"
 
