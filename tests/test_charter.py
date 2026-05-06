@@ -222,3 +222,71 @@ def test_expert_operating_questions_catalog_covers_onboarding_review_questions()
     ]
     for term in required_terms:
         assert term in catalog
+
+
+def test_expert_question_evidence_map_covers_evidence_classes_and_gaps():
+    evidence_map = Path("docs/expert-question-evidence-map.md").read_text(encoding="utf-8")
+
+    required_sections = [
+        "## Goal / problem framing",
+        "## Evidence source classes",
+        "## Current evidence inventory",
+        "## Status vocabulary for evidence mapping",
+        "## Mapping: universal repository-security questions",
+        "## Mapping: candidate Linux-kernel questions",
+        "## Mapping: codebase-experience-dependent questions",
+        "## Evidence inputs that can feed first named checks",
+        "## Required output behavior",
+        "## Downstream Beads",
+    ]
+    for section in required_sections:
+        assert section in evidence_map
+
+    required_questions = [
+        "UQ-001: What authority boundary did this change touch?",
+        "UQ-002: Which invariant does this subsystem or process appear to rely on?",
+        "UQ-003: Is this change modifying policy, enforcement, setup, use, or observation?",
+        "UQ-004: Are tests, CI, static analysis, warnings, fuzzing, or sanitizers being weakened?",
+        "UQ-005: Are generated artifacts changing with corresponding source,",
+        "UQ-006: Did this change add or modify high-authority executable code?",
+        "UQ-007: Is risky behavior split across commits, files, or review surfaces?",
+        "UQ-008: Does the change match its stated purpose without hiding semantic drift?",
+        "UQ-009: What evidence would make this change acceptable?",
+        "UQ-010: What exception would a responsible maintainer have to write down?",
+        "KQ-001: Does this touch a kernel authority or isolation boundary?",
+        "KQ-002: Does this alter Kconfig, build options, defaults, or feature gates?",
+        "KQ-003: Does this change a user-visible ABI, syscall, ioctl, netlink,",
+        "KQ-004: Does this change scheduler, memory-management, locking, lifetime,",
+        "KQ-005: Are source changes separated from required kernel tests, configs,",
+        "CQ-001: What subsystem-specific invariants are maintainers relying on here?",
+        "CQ-002: Which files or path prefixes normally change together for a reason",
+        "CQ-003: Which target profiles make this change operationally relevant?",
+        "CQ-004: Which repeated review objections should become durable questions or checks?",
+    ]
+    for question in required_questions:
+        assert question in evidence_map
+
+    required_terms = [
+        "local git",
+        "GitHub hostile metadata",
+        "mailing-list/archive",
+        "external snapshot",
+        "generated artifact",
+        "build/CI",
+        "target profile",
+        "answered_by_current_evidence",
+        "partially_answered",
+        "missing_evidence",
+        "not_collected_by_default",
+        "requires_codebase_experience",
+        "no_check_coverage",
+        "authority_boundary_map_missing",
+        "replacement_or_exception_evidence_missing",
+        "generated_source_correspondence_missing",
+        "target_profile_missing",
+        "not a policy DSL",
+        "not a verdict table",
+        "not an anomaly model",
+    ]
+    for term in required_terms:
+        assert term in evidence_map
