@@ -2,9 +2,9 @@
 
 ## Goal / problem framing
 
-Normalized evidence schemas are the compatibility layer between local git parsing, commit-range review, mailing-list context, external evidence snapshots, findings, and later review packets. They make security-relevant boundaries visible before downstream parsers and resolvers harden.
+Normalized evidence schemas are the compatibility layer between local git parsing, commit-range review, mailing-list context, external evidence snapshots, operating-envelope policies, policy check results, findings, and later review packets. They make security-relevant boundaries visible before downstream parsers and resolvers harden.
 
-The schemas are reviewer-assistance infrastructure. They are not verdicts and do not decide whether a commit, range, message, project, or artifact is safe or malicious.
+The schemas are reviewer-assistance infrastructure. They are not verdicts and do not decide whether a commit, range, message, project, or artifact is safe or malicious. Policy schemas should support logical allow-list checks: whether a declared rule applies, is satisfied, is violated, lacks required evidence, or is inconclusive.
 
 Every artifact shape must preserve three properties:
 
@@ -88,6 +88,22 @@ Additional required fields: `provider`, `subject`, `source`, and `claims`.
 
 External evidence records follow the snapshot-first model in `docs/external-evidence.md`: provider facts are context, not verdicts, and live network collection remains outside default review commands.
 
+### operating_envelope_policy
+
+Purpose: explicit allow-list-style rule that describes what a repository, subsystem, process, patch shape, release path, or target profile permits.
+
+Additional required fields should include `policy_id`, `version`, `scope`, `applies_to`, `allowed_if`, `requires_evidence`, `exception_process`, and `rationale`.
+
+Policies should be inspectable and versioned. Historical data may suggest candidate policies, but accepted policies must not hide probabilistic anomaly detection behind policy-shaped output.
+
+### policy_check_result
+
+Purpose: deterministic result of applying one operating-envelope policy to one commit, range, PR, path, subsystem, or target profile.
+
+Additional required fields should include `policy_id`, `status`, `subject`, `evidence_refs`, `missing_evidence`, `required_next_action`, and `uncertainty`.
+
+Allowed statuses should include `satisfied`, `violated`, `missing_evidence`, `not_applicable`, and `inconclusive`. A policy check result should cite evidence and required action, not an opaque probability of maliciousness.
+
 ## Validation fixtures
 
 `tests/test_evidence_schemas.py` validates representative artifacts for all schema kinds and confirms that invalid fixtures fail closed when evidence references are missing or trust-boundary labels are unknown.
@@ -102,4 +118,5 @@ The validator is intentionally lightweight. It gives downstream implementation b
 - Every artifact must include `limits` with at least `truncated` and `omitted_record_count`.
 - Every artifact should include `risk_hints`, even if empty, so hostile-input routing is visible.
 - Review packets and scorecards should treat schema counts as steering signals, not product-success claims.
+- Policy artifacts and policy check results must distinguish explicit rule violations from historical anomaly or baseline observations.
 - Local `review-commit` and `review-range` should remain deterministic and offline by default.
