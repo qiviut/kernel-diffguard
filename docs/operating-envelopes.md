@@ -19,10 +19,11 @@ The intended flow is:
 
 1. Resolve inputs to immutable, bounded evidence.
 2. Normalize evidence with trust-boundary labels and evidence references.
-3. Apply explicit operating-envelope policies.
-4. Emit check results: satisfied, violated, missing evidence, not applicable, or
+3. Ask explicit expert operating questions and map them to bounded evidence.
+4. Apply explicit named checks or operating-envelope policies where they exist.
+5. Emit check results: satisfied, violated, missing evidence, not applicable, or
    inconclusive.
-5. Generate human review packets around violations, required exceptions, and
+6. Generate human review packets around violations, required exceptions, and
    retest obligations.
 
 The tool should avoid claims like "this is probably malicious" unless they are
@@ -114,6 +115,21 @@ history are useful as evidence for designing candidate policies. They should not
 produce unreviewable "unusual therefore bad" findings. If no policy covers a
 change, the correct result is an explicit coverage gap such as `no_policy` or
 `inconclusive`, not an invented probability.
+
+## Expert questions before policy artifacts
+
+At the current maturity level, kernel-diffguard should start from expert
+operating questions rather than a broad user-authored policy DSL. The catalog in
+`docs/expert-operating-questions.md` records generic, candidate kernel-specific,
+and codebase-experience-dependent questions that security reviewers would ask.
+
+The near-term implementation path is:
+
+expert question -> evidence mapping -> named expert check -> check result ->
+golden case
+
+Only after multiple named checks show repeated structure should the project
+factor that structure into reusable policy data.
 
 ## Policy artifact shape
 
