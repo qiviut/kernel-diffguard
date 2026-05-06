@@ -153,18 +153,52 @@ fixtures. A starting schema should include:
 
 ## Check-result artifact shape
 
-A future check result should include:
+The near-term result artifact is `expert_check_result`: a deterministic result of
+applying one named expert check to bounded evidence. A later
+`policy_check_result` can reuse this shape once explicit envelope artifacts are
+introduced.
 
-- `policy_id`
+A check result should include:
+
+- `check_id`: stable ID such as `KDG-CHECK-REMOVED-TEST`.
+- `expert_question`: the `UQ-*`, `KQ-*`, or `CQ-*` question being answered.
 - `status`: `satisfied`, `violated`, `missing_evidence`, `not_applicable`, or
-  `inconclusive`
-- `subject`: commit, range, PR, path, subsystem, or profile target
-- `evidence_refs`: exact artifacts and fields supporting the result
-- `missing_evidence`: required evidence that was absent or unusable
+  `inconclusive`.
+- `subject`: commit, range, PR, path, subsystem, generated artifact, or profile
+  target.
+- `evidence_refs`: exact artifacts and fields supporting the result.
+- `trust_boundary`: where the cited evidence came from or that the result is a
+  derived review signal.
+- `limits`: truncation, omission, and bounded-output metadata.
+- `missing_evidence`: required evidence that was absent or unusable.
 - `required_next_action`: restore invariant, add evidence, add exception, retest,
-  or inspect manually
-- `uncertainty`: limited to what cannot be concluded from the available evidence,
-  not a probability of maliciousness
+  or inspect manually.
+- `rationale`: why the check exists.
+- `limitations`: what the check cannot conclude.
+
+The closed status vocabulary deliberately excludes terms like `suspicious`,
+`anomalous`, and `risky`. `violated` means an explicit obligation is not met.
+`missing_evidence` means the tool cannot responsibly answer from collected
+artifacts. Neither status is a maliciousness claim.
+
+## Exception model
+
+Exceptions are explicit human/project records for valid changes that leave an
+envelope or unresolved missing-evidence state. An exception should include:
+
+- `exception_id`
+- `scope`: repository, subsystem, process, patch-shape, release, target profile,
+  commit, range, PR, or path scope.
+- `applies_to_check_ids`
+- `rationale`
+- `approver`
+- `expires_or_review_by`
+- `compensating_controls`
+- `evidence_refs`
+
+Exceptions make decisions reviewable; they do not convert a result into proof of
+safety. Review packets should show the original result and the exception record
+separately.
 
 ## First demonstrable policies
 

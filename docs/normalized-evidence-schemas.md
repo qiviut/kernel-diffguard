@@ -88,6 +88,46 @@ Additional required fields: `provider`, `subject`, `source`, and `claims`.
 
 External evidence records follow the snapshot-first model in `docs/external-evidence.md`: provider facts are context, not verdicts, and live network collection remains outside default review commands.
 
+### named_expert_check
+
+Purpose: reviewed-code check contract promoted from an expert operating question.
+
+Additional required fields: `check_id`, `expert_question`, `classification`,
+`applies_to`, `evidence_consumed`, `status_conditions`,
+`required_next_action`, `rationale`, and `limitations`.
+
+Allowed classifications are `generic`, `candidate_kernel_specific`, and
+`requires_codebase_experience`. These classifications keep generic repository
+hygiene separate from kernel-specific or project-specific wisdom.
+
+`status_conditions` must define the closed status vocabulary: `satisfied`,
+`violated`, `missing_evidence`, `not_applicable`, and `inconclusive`.
+
+### expert_check_result
+
+Purpose: deterministic result of applying one named expert check to bounded
+evidence for one commit, range, PR, path, subsystem, generated artifact, or target
+profile.
+
+Additional required fields: `check_id`, `expert_question`, `status`, `subject`,
+`missing_evidence`, `required_next_action`, `rationale`, and `limitations`.
+
+Allowed statuses are `satisfied`, `violated`, `missing_evidence`,
+`not_applicable`, and `inconclusive`. Statuses such as `suspicious`, `risky`, or
+`anomalous` are intentionally not part of the schema. The result must cite
+evidence and a required next action; it must not claim malicious intent.
+
+### exception_record
+
+Purpose: explicit human/project exception for a violated or missing-evidence
+check result.
+
+Additional required fields: `exception_id`, `scope`, `applies_to_check_ids`,
+`rationale`, `approver`, `expires_or_review_by`, and `compensating_controls`.
+
+Exception records make a decision reviewable. They do not make a change safe by
+default and should be scoped, cited, and revisited.
+
 ### operating_envelope_policy
 
 Purpose: explicit allow-list-style rule that describes what a repository, subsystem, process, patch shape, release path, or target profile permits.
@@ -106,7 +146,7 @@ Allowed statuses should include `satisfied`, `violated`, `missing_evidence`, `no
 
 ## Validation fixtures
 
-`tests/test_evidence_schemas.py` validates representative artifacts for all schema kinds and confirms that invalid fixtures fail closed when evidence references are missing or trust-boundary labels are unknown.
+`tests/test_evidence_schemas.py` validates representative artifacts for all schema kinds and confirms that invalid fixtures fail closed when evidence references are missing, trust-boundary labels are unknown, named-check classifications are unknown, or check-result statuses fall outside the closed vocabulary.
 
 The validator is intentionally lightweight. It gives downstream implementation beads an executable contract without committing the project to a heavyweight JSON Schema/code-generation dependency before the interface stabilizes.
 

@@ -6,6 +6,20 @@ from typing import Any
 
 JsonObject = dict[str, Any]
 
+CHECK_RESULT_STATUSES = (
+    "satisfied",
+    "violated",
+    "missing_evidence",
+    "not_applicable",
+    "inconclusive",
+)
+
+NAMED_CHECK_CLASSIFICATIONS = (
+    "generic",
+    "candidate_kernel_specific",
+    "requires_codebase_experience",
+)
+
 TRUST_BOUNDARY_LABELS = (
     "local_git_metadata_untrusted",
     "local_git_diff_untrusted",
@@ -88,6 +102,56 @@ ARTIFACT_SCHEMAS: dict[str, JsonObject] = {
         "trust_boundaries": ["external_evidence_snapshot_untrusted"],
         "required_fields": [*_COMMON_REQUIRED_FIELDS, "provider", "subject", "source", "claims"],
         "hostile_fields": ["provider", "subject", "source", "claims"],
+    },
+    "named_expert_check": {
+        "summary": "Reviewed-code check contract promoted from an expert operating question.",
+        "trust_boundaries": ["derived_review_signal"],
+        "required_fields": [
+            *_COMMON_REQUIRED_FIELDS,
+            "check_id",
+            "expert_question",
+            "classification",
+            "applies_to",
+            "evidence_consumed",
+            "status_conditions",
+            "required_next_action",
+            "rationale",
+            "limitations",
+        ],
+        "hostile_fields": ["rationale", "limitations"],
+    },
+    "expert_check_result": {
+        "summary": "Deterministic result of applying one named expert check to bounded evidence.",
+        "trust_boundaries": ["derived_review_signal"],
+        "required_fields": [
+            *_COMMON_REQUIRED_FIELDS,
+            "check_id",
+            "expert_question",
+            "status",
+            "subject",
+            "missing_evidence",
+            "required_next_action",
+            "rationale",
+            "limitations",
+        ],
+        "hostile_fields": ["subject", "rationale", "limitations"],
+    },
+    "exception_record": {
+        "summary": (
+            "Explicit human/project exception for a violated or missing-evidence check result."
+        ),
+        "trust_boundaries": ["derived_review_signal"],
+        "required_fields": [
+            *_COMMON_REQUIRED_FIELDS,
+            "exception_id",
+            "scope",
+            "applies_to_check_ids",
+            "rationale",
+            "approver",
+            "expires_or_review_by",
+            "compensating_controls",
+        ],
+        "hostile_fields": ["rationale", "approver", "compensating_controls"],
     },
     "lore_search_result_set": {
         "summary": "Bounded lore.kernel.org Atom search result with normalized message artifacts.",
@@ -207,6 +271,8 @@ def validate_schema_fixture(fixture: JsonObject) -> list[str]:
         _validate_trust_boundary(errors, prefix, artifact)
         _validate_limits(errors, prefix, artifact)
         _validate_risk_hints(errors, prefix, artifact)
+        _validate_named_check_fields(errors, prefix, artifact)
+        _validate_check_result_fields(errors, prefix, artifact)
     return errors
 
 
@@ -245,6 +311,35 @@ def _validate_risk_hints(errors: list[str], prefix: str, artifact: JsonObject) -
     risk_hints = artifact.get("risk_hints")
     if not isinstance(risk_hints, list) or any(not isinstance(hint, str) for hint in risk_hints):
         errors.append(f"{prefix}.risk_hints must be a list of strings")
+
+
+def _validate_named_check_fields(errors: list[str], prefix: str, artifact: JsonObject) -> None:
+    if artifact.get("artifact_type") != "named_expert_check":
+        return
+    classification = artifact.get("classification")
+    if classification not in NAMED_CHECK_CLASSIFICATIONS:
+        errors.append(f"{prefix}.classification is unknown: {classification}")
+    status_conditions = artifact.get("status_conditions")
+    if not isinstance(status_conditions, dict):
+        errors.append(f"{prefix}.status_conditions must be an object")
+        return
+    for status in CHECK_RESULT_STATUSES:
+        if status not in status_conditions:
+            errors.append(f"{prefix}.status_conditions.{status} is required")
+
+
+def _validate_check_result_fields(errors: list[str], prefix: str, artifact: JsonObject) -> None:
+    if artifact.get("artifact_type") != "expert_check_result":
+        return
+    status = artifact.get("status")
+    if status not in CHECK_RESULT_STATUSES:
+        errors.append(f"{prefix}.status is unknown: {status}")
+    if status != "not_applicable" and not _is_non_empty_string_list(artifact.get("evidence_refs")):
+        errors.append(f"{prefix}.evidence_refs are required for applicable check results")
+    if status in {"violated", "missing_evidence", "inconclusive"}:
+        next_action = artifact.get("required_next_action")
+        if not isinstance(next_action, str) or not next_action.strip():
+            errors.append(f"{prefix}.required_next_action must describe the human next step")
 
 
 def _is_non_empty_string_list(value: object) -> bool:
