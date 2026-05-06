@@ -19,6 +19,7 @@ SUPPORTED_INPUT_SHAPES = (
     "normalized commit/message related-candidate scoring",
     "lore.kernel.org Atom search to normalized message artifacts",
     "GitHub-hosted immutable commit input",
+    "GitHub pull request read-only review",
 )
 
 HEURISTIC_FINDINGS = (
