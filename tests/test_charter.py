@@ -230,6 +230,78 @@ def test_expert_operating_questions_catalog_covers_onboarding_review_questions()
         assert term in catalog
 
 
+def test_named_expert_checks_define_contracts_without_dsl_or_scoring():
+    checks = Path("docs/named-expert-checks.md").read_text(encoding="utf-8")
+
+    required_sections = [
+        "## Goal / problem framing",
+        "## Design posture",
+        "## Named-check contract",
+        "## Result vocabulary",
+        "## First implementation-ready checks",
+        "## Deferred checks requiring codebase experience",
+        "## Review, testing, and promotion rules",
+        "## Refactoring posture",
+        "## Downstream Beads",
+    ]
+    for section in required_sections:
+        assert section in checks
+
+    required_contract_fields = [
+        "check_id",
+        "expert_question",
+        "applies_to",
+        "evidence_consumed",
+        "satisfied_when",
+        "violated_when",
+        "missing_evidence_when",
+        "inconclusive_when",
+        "not_applicable_when",
+        "required_next_action",
+        "rationale",
+        "limitations",
+    ]
+    for field in required_contract_fields:
+        assert field in checks
+
+    required_check_ids = [
+        "KDG-CHECK-REMOVED-TEST",
+        "KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+        "KDG-CHECK-HIGH-AUTHORITY-EXECUTABLE",
+        "KDG-CHECK-GENERATED-CORRESPONDENCE",
+        "KDG-CHECK-KERNEL-RETEST-OBLIGATION",
+    ]
+    for check_id in required_check_ids:
+        assert check_id in checks
+
+    required_statuses = [
+        "satisfied",
+        "violated",
+        "missing_evidence",
+        "inconclusive",
+        "not_applicable",
+    ]
+    for status in required_statuses:
+        assert status in checks
+
+    required_terms = [
+        "reviewed Python code",
+        "not a user-authored DSL",
+        "not an anomaly detector",
+        "not a maliciousness verdict",
+        "requires_codebase_experience",
+        "accepted_invariant_missing",
+        "target_profile_missing",
+        "no_check_coverage",
+        "observation -> candidate expert question -> evidence map -> named-check contract",
+        "Do not invent a broad policy DSL now",
+        "kernel-diffguard-ehv",
+        "kernel-diffguard-krn",
+    ]
+    for term in required_terms:
+        assert term in checks
+
+
 def test_expert_question_evidence_map_covers_evidence_classes_and_gaps():
     evidence_map = Path("docs/expert-question-evidence-map.md").read_text(encoding="utf-8")
 
