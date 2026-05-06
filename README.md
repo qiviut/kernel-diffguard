@@ -49,4 +49,18 @@ Range JSON includes cumulative `range_signals`: stable author buckets, finding-i
 
 Current findings are intentionally simple reviewer-assistance signals, not verdicts: removed tests, CI/static-analysis changes, warning-policy weakening, generated-code churn, suspicious script additions, Linux security cues, prompt-injection-like text, and high-risk kernel/build paths. Commit JSON also includes `optional_check_hooks` for environment-dependent compiler-warning and static-analyzer delta checks, plus `kernel_impacts`: path-heuristic hints for broad Linux areas such as Kconfig, drivers, architecture-specific code, syscall/ABI surfaces, filesystems, networking, scheduler, memory management, and security-sensitive paths. Range JSON aggregates these impact IDs under `range_signals.kernel_impacts` so an X→Y review can show which kernel areas changed across the span.
 
+## Local verification
+
+Run the same verification suite that GitHub Actions uses:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+PYTHON=.venv/bin/python scripts/check.sh
+```
+
+The script runs tests, golden review-packet regression cases, the review-signal
+scorecard, ruff, mypy, and `git diff --check`. Keep `.github/workflows/ci.yml`
+calling this script instead of duplicating individual verification commands.
+
 OpenSSF-aligned work is treated as external evidence, not as a replacement for local source review. See `docs/expert-operating-questions.md` for the onboarding-stage catalog of security-review questions that should guide named expert checks without becoming a premature DSL. See `docs/expert-question-evidence-map.md` for how those questions map to current evidence, missing evidence, and coverage-gap results. See `docs/operating-envelopes.md` for the allow-list/logical-policy direction that should guide future review work. See `docs/external-evidence.md` for the snapshot-first integration model covering OpenSSF Scorecard, SLSA, Sigstore, OSV, OpenVEX, GUAC/Trustify, Security Insights, Criticality Score, and Package Analysis-style baselines. See `docs/official-interface-research.md` for current official Git, Python packaging/typing, public-inbox/lore, and Linux kernel process references that should guide parser and resolver interfaces. See `docs/normalized-evidence-schemas.md` for the first compatibility schema catalog covering commit artifacts, range manifests, mailing-list messages, related-message candidates, findings, recommendations, external evidence records, evidence references, bounds, and trust-boundary labels. See `docs/architecture.md`, `docs/roadmap.md`, and `docs/testing-strategy.md` for the starting design and test/fixture strategy.
