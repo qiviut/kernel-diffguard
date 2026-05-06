@@ -6,13 +6,20 @@ The default path is deterministic and local-first: fast unit tests, synthetic in
 
 ## Default CI gates
 
-Default GitHub Actions CI should remain deterministic, cheap, and safe for pull requests:
+Default GitHub Actions CI should remain deterministic, cheap, and safe for pull requests. The required gate is:
 
-1. `pytest -q`
+```bash
+scripts/check.sh
+```
+
+That script is the single source of truth for both local verification and GitHub Actions. It currently runs:
+
+1. `python -m pytest -q`
 2. `scripts/run-golden-analysis.sh`
 3. `scripts/run-scorecard.sh`
-4. `ruff check .`
-5. `mypy src`
+4. `python -m ruff check .`
+5. `python -m mypy src`
+6. `git diff --check`
 
 Default CI must use no network, no real Linux kernel checkout, no live GitHub API calls, and no lore.kernel.org requests. Network-backed smoke checks belong in separate manual or scheduled workflows.
 
@@ -25,7 +32,7 @@ Workflow action refs are supply-chain inputs. Trusted workflows pin official act
    - `git ls-remote https://github.com/actions/checkout.git refs/tags/v6`
    - `git ls-remote https://github.com/actions/setup-python.git refs/tags/v6`
 3. Replace only the SHA portion of the corresponding `uses:` line in `.github/workflows/ci.yml`; keep the `upstream tag intent: v6` comment accurate if the intended major tag changes.
-4. Validate that every `uses:` ref in trusted workflows is still a 40-character lowercase hex SHA, then run the local CI-equivalent gates: `python -m pytest -q`, `scripts/run-golden-analysis.sh`, `scripts/run-scorecard.sh`, `ruff check .`, and `mypy src`.
+4. Validate that every `uses:` ref in trusted workflows is still a 40-character lowercase hex SHA, then run the CI-equivalent gate: `scripts/check.sh`.
 5. If `actionlint` is available locally, run it before committing the workflow change.
 
 ## Source-review fixture pyramid

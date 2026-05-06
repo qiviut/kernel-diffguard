@@ -70,6 +70,12 @@ def test_ci_workflow_pins_github_actions_by_full_sha_with_update_intent():
     assert "git ls-remote https://github.com/actions/checkout.git refs/tags/v6" in strategy
     assert "git ls-remote https://github.com/actions/setup-python.git refs/tags/v6" in strategy
     assert "review upstream release notes" in strategy
+    assert "scripts/check.sh" in workflow
+    assert "scripts/check.sh" in strategy
+    assert "python -m pytest -q" in strategy
+    assert "python -m ruff check ." in strategy
+    assert "python -m mypy src" in strategy
+    assert "git diff --check" in strategy
 
 
 def test_external_evidence_design_covers_openssf_snapshot_boundaries():
