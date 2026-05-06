@@ -562,8 +562,9 @@ Forbidden language:
 
 ## Downstream Beads
 
-- `kernel-diffguard-ngj` should use this map to choose named expert checks and
-  define `evidence_consumed`, `missing_evidence_when`, and `limitations` fields.
+- `kernel-diffguard-ngj` uses this map in `docs/named-expert-checks.md` to choose
+  named expert checks and define `evidence_consumed`, `missing_evidence_when`,
+  and `limitations` fields.
 - `kernel-diffguard-ehv` should include evidence-coverage states in the
   check-result model or preserve them in `missing_evidence`/`uncertainty`.
 - `kernel-diffguard-krn` should implement only checks whose evidence contract is

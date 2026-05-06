@@ -36,8 +36,8 @@
 
 - Catalog the expert operating questions a security reviewer would ask before turning them into checks.
 - Map each initial question to available evidence and explicit coverage gaps.
-- Define named expert checks as reviewed code before inventing any broad policy DSL.
-- Define explicit allow-list-style policy artifacts for repository, subsystem, process, patch-shape, release, and target-profile envelopes.
+- Define named expert checks as reviewed code before inventing any broad policy DSL; see `docs/named-expert-checks.md`.
+- Define explicit allow-list-style policy artifacts for repository, subsystem, process, patch-shape, release, and target-profile envelopes after named checks establish the first real result shape.
 - Define policy check result artifacts with statuses such as satisfied, violated, missing evidence, not applicable, and inconclusive.
 - Make policies inspectable and versioned; every violation must cite evidence and a required next action.
 - Treat historical baselines as candidate-policy material only. They may suggest envelopes, but they must not silently produce anomaly scores or implied suspicion.
