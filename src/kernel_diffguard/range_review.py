@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .commit_review import CI_STATIC_ANALYSIS_MARKERS, review_commit
+from .expert_checks import evaluate_range_checks, render_check_results_text
 from .hostile_input import scan_hostile_instruction_texts
 from .kernel_impact import kernel_impacts_for_paths
 
@@ -141,6 +142,7 @@ def render_text(review: JsonObject) -> str:
             )
             for finding in merge_findings:
                 lines.append(f"  - {finding['id']} [{finding['severity']}]: {finding['summary']}")
+    lines.extend(render_check_results_text(review.get("expert_check_results", [])))
     return "\n".join(lines)
 
 
@@ -169,6 +171,7 @@ def _review_commit_sequence(
     }
     if extra_fields:
         review.update(extra_fields)
+    review["expert_check_results"] = evaluate_range_checks(review)
     return review
 
 

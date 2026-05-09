@@ -2,6 +2,63 @@
   "commits": [
     {
       "commit": "<commit>",
+      "expert_check_results": [
+        {
+          "artifact_type": "expert_check_result",
+          "check_id": "KDG-CHECK-REMOVED-TEST",
+          "expert_question": "UQ-004",
+          "id": "check-result:KDG-CHECK-REMOVED-TEST:fd87052a670a9c517eb85a14b57ff9abafa2b842",
+          "limitations": "This check consumes existing removed-test signals only; it does not perform semantic coverage or rename analysis.",
+          "limits": {
+            "omitted_record_count": 0,
+            "truncated": false
+          },
+          "missing_evidence": [
+            "replacement coverage evidence",
+            "accepted exception record"
+          ],
+          "rationale": "Removed tests weaken feedback loops and must be paired with replacement coverage or an explicit exception.",
+          "required_next_action": "Provide replacement test evidence, restore coverage, or record a scoped maintainer exception.",
+          "risk_hints": [
+            "human-review-required",
+            "not-maliciousness-verdict"
+          ],
+          "status": "missing_evidence",
+          "subject": {
+            "id": "<commit>",
+            "kind": "commit"
+          },
+          "trust_boundary": "derived_review_signal"
+        },
+        {
+          "artifact_type": "expert_check_result",
+          "check_id": "KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+          "expert_question": "UQ-004",
+          "id": "check-result:KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED:fd87052a670a9c517eb85a14b57ff9abafa2b842",
+          "limitations": "This check is marker and path based; it cannot prove whether a changed gate was equivalently moved or replaced elsewhere.",
+          "limits": {
+            "omitted_record_count": 0,
+            "truncated": false
+          },
+          "missing_evidence": [
+            "required gate policy evidence",
+            "equivalent replacement command evidence",
+            "accepted exception record"
+          ],
+          "rationale": "Weakened CI, static-analysis, warning, sanitizer, or fuzzing gates can let later unsafe changes pass undetected.",
+          "required_next_action": "Cite the replacement gate, provide required-check context, restore the gate, or record an explicit exception.",
+          "risk_hints": [
+            "human-review-required",
+            "not-maliciousness-verdict"
+          ],
+          "status": "missing_evidence",
+          "subject": {
+            "id": "<commit>",
+            "kind": "commit"
+          },
+          "trust_boundary": "derived_review_signal"
+        }
+      ],
       "findings": [
         {
           "id": "removed-test"
@@ -33,6 +90,67 @@
         "security/backdoor.c",
         "tests/test_guard.py"
       ]
+    }
+  ],
+  "expert_check_results": [
+    {
+      "artifact_type": "expert_check_result",
+      "check_id": "KDG-CHECK-REMOVED-TEST",
+      "expert_question": "UQ-004",
+      "id": "check-result:KDG-CHECK-REMOVED-TEST:range:base-exclusive-target-inclusive",
+      "limitations": "This check consumes existing removed-test signals only; it does not perform semantic coverage or rename analysis.",
+      "limits": {
+        "omitted_record_count": 0,
+        "truncated": false
+      },
+      "missing_evidence": [
+        "replacement coverage evidence",
+        "accepted exception record"
+      ],
+      "rationale": "Removed tests weaken feedback loops and must be paired with replacement coverage or an explicit exception.",
+      "required_next_action": "Provide replacement test evidence, restore coverage, or record a scoped maintainer exception.",
+      "risk_hints": [
+        "human-review-required",
+        "not-maliciousness-verdict"
+      ],
+      "status": "missing_evidence",
+      "subject": {
+        "base": "<base>",
+        "id": "range:base-exclusive-target-inclusive",
+        "kind": "range",
+        "target": "<target>"
+      },
+      "trust_boundary": "derived_review_signal"
+    },
+    {
+      "artifact_type": "expert_check_result",
+      "check_id": "KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+      "expert_question": "UQ-004",
+      "id": "check-result:KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED:range:base-exclusive-target-inclusive",
+      "limitations": "This check is marker and path based; it cannot prove whether a changed gate was equivalently moved or replaced elsewhere.",
+      "limits": {
+        "omitted_record_count": 0,
+        "truncated": false
+      },
+      "missing_evidence": [
+        "required gate policy evidence",
+        "equivalent replacement command evidence",
+        "accepted exception record"
+      ],
+      "rationale": "Weakened CI, static-analysis, warning, sanitizer, or fuzzing gates can let later unsafe changes pass undetected.",
+      "required_next_action": "Cite the replacement gate, provide required-check context, restore the gate, or record an explicit exception.",
+      "risk_hints": [
+        "human-review-required",
+        "not-maliciousness-verdict"
+      ],
+      "status": "missing_evidence",
+      "subject": {
+        "base": "<base>",
+        "id": "range:base-exclusive-target-inclusive",
+        "kind": "range",
+        "target": "<target>"
+      },
+      "trust_boundary": "derived_review_signal"
     }
   ],
   "findings_by_commit": {

@@ -1,5 +1,53 @@
 {
   "commit": "<commit>",
+  "expert_check_results": [
+    {
+      "artifact_type": "expert_check_result",
+      "check_id": "KDG-CHECK-REMOVED-TEST",
+      "expert_question": "UQ-004",
+      "id": "check-result:KDG-CHECK-REMOVED-TEST:2aa2ec3813929248541e35f3b89a285e6778a69b",
+      "limitations": "This check consumes existing removed-test signals only; it does not perform semantic coverage or rename analysis.",
+      "limits": {
+        "omitted_record_count": 0,
+        "truncated": false
+      },
+      "missing_evidence": [],
+      "rationale": "Removed tests weaken feedback loops and must be paired with replacement coverage or an explicit exception.",
+      "required_next_action": "No action required for this check on this subject.",
+      "risk_hints": [
+        "not-applicable-not-verdict"
+      ],
+      "status": "not_applicable",
+      "subject": {
+        "id": "<commit>",
+        "kind": "commit"
+      },
+      "trust_boundary": "derived_review_signal"
+    },
+    {
+      "artifact_type": "expert_check_result",
+      "check_id": "KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+      "expert_question": "UQ-004",
+      "id": "check-result:KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED:2aa2ec3813929248541e35f3b89a285e6778a69b",
+      "limitations": "This check is marker and path based; it cannot prove whether a changed gate was equivalently moved or replaced elsewhere.",
+      "limits": {
+        "omitted_record_count": 0,
+        "truncated": false
+      },
+      "missing_evidence": [],
+      "rationale": "Weakened CI, static-analysis, warning, sanitizer, or fuzzing gates can let later unsafe changes pass undetected.",
+      "required_next_action": "No action required for this check on this subject.",
+      "risk_hints": [
+        "not-applicable-not-verdict"
+      ],
+      "status": "not_applicable",
+      "subject": {
+        "id": "<commit>",
+        "kind": "commit"
+      },
+      "trust_boundary": "derived_review_signal"
+    }
+  ],
   "findings": [
     {
       "id": "linux-security-cue"
