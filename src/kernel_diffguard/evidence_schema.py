@@ -108,6 +108,7 @@ ARTIFACT_SCHEMAS: dict[str, JsonObject] = {
             "review_posture",
             "subject",
             "policy_result_groups",
+            "expert_question_groups",
             "recommendations",
             "required_exceptions",
             "raw_finding_refs",

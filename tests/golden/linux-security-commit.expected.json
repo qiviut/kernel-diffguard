@@ -63,6 +63,46 @@
   ],
   "review_packet": {
     "artifact_type": "review_packet",
+    "expert_question_groups": {
+      "UQ-004": {
+        "inconclusive": [],
+        "missing_evidence": [],
+        "no_check_coverage": [],
+        "not_applicable": [
+          {
+            "check_id": "KDG-CHECK-REMOVED-TEST",
+            "id": "check-result:KDG-CHECK-REMOVED-TEST:2aa2ec3813929248541e35f3b89a285e6778a69b",
+            "status": "not_applicable"
+          },
+          {
+            "check_id": "KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+            "id": "check-result:KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED:2aa2ec3813929248541e35f3b89a285e6778a69b",
+            "status": "not_applicable"
+          }
+        ],
+        "satisfied": [],
+        "violated": []
+      },
+      "no_check_coverage": {
+        "inconclusive": [],
+        "missing_evidence": [],
+        "no_check_coverage": [
+          {
+            "finding_id": "linux-security-cue",
+            "id": "coverage-gap:finding:linux-security-cue",
+            "status": "no_check_coverage"
+          },
+          {
+            "finding_id": "high-risk-path",
+            "id": "coverage-gap:finding:high-risk-path",
+            "status": "no_check_coverage"
+          }
+        ],
+        "not_applicable": [],
+        "satisfied": [],
+        "violated": []
+      }
+    },
     "id": "review-packet:commit:2aa2ec3813929248541e35f3b89a285e6778a69b",
     "limits": {
       "omitted_record_count": 0,
@@ -71,6 +111,7 @@
     "policy_result_groups": {
       "inconclusive": [],
       "missing_evidence": [],
+      "no_check_coverage": [],
       "not_applicable": [
         {
           "check_id": "KDG-CHECK-REMOVED-TEST",
@@ -90,7 +131,26 @@
       "finding:linux-security-cue",
       "finding:high-risk-path"
     ],
-    "recommendations": [],
+    "recommendations": [
+      {
+        "finding_id": "linux-security-cue",
+        "id": "recommendation:coverage-gap:linux-security-cue",
+        "missing_evidence": [
+          "accepted named-check coverage decision"
+        ],
+        "required_next_action": "Decide whether this deterministic finding needs a named check, accepted exception path, or should remain raw evidence only.",
+        "status": "no_check_coverage"
+      },
+      {
+        "finding_id": "high-risk-path",
+        "id": "recommendation:coverage-gap:high-risk-path",
+        "missing_evidence": [
+          "accepted named-check coverage decision"
+        ],
+        "required_next_action": "Decide whether this deterministic finding needs a named check, accepted exception path, or should remain raw evidence only.",
+        "status": "no_check_coverage"
+      }
+    ],
     "required_exceptions": [],
     "review_posture": "review-assistant-not-verdict",
     "risk_hints": [

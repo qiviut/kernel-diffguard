@@ -211,6 +211,24 @@ def test_schema_fixture_validation_accepts_representative_artifacts():
                     ],
                     "inconclusive": [],
                     "not_applicable": [],
+                    "no_check_coverage": [],
+                },
+                "expert_question_groups": {
+                    "UQ-004": {
+                        "satisfied": [],
+                        "violated": [],
+                        "missing_evidence": [
+                            {
+                                "id": "check-result:removed-test:abc123",
+                                "check_id": "KDG-CHECK-REMOVED-TEST",
+                                "status": "missing_evidence",
+                                "evidence_refs": ["finding:removed-test"],
+                            }
+                        ],
+                        "inconclusive": [],
+                        "not_applicable": [],
+                        "no_check_coverage": [],
+                    }
                 },
                 "recommendations": [
                     {

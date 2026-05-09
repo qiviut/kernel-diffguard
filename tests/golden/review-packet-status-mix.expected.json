@@ -7,6 +7,67 @@
     "finding:removed-test",
     "finding:ci-static-analysis-weakened"
   ],
+  "expert_question_groups": {
+    "UQ-DEMO": {
+      "inconclusive": [],
+      "missing_evidence": [
+        {
+          "check_id": "KDG-CHECK-DEMO-MISSING-EVIDENCE",
+          "evidence_refs": [
+            "finding:removed-test",
+            "path:tests/test_guard.py"
+          ],
+          "id": "check-result:KDG-CHECK-DEMO-MISSING-EVIDENCE:demo-commit",
+          "policy_id": "KDG-POLICY-DEMO-MISSING-EVIDENCE",
+          "status": "missing_evidence"
+        }
+      ],
+      "no_check_coverage": [],
+      "not_applicable": [],
+      "satisfied": [
+        {
+          "check_id": "KDG-CHECK-DEMO-SATISFIED",
+          "evidence_refs": [
+            "finding:replacement-test-added",
+            "path:tests/test_replacement.py"
+          ],
+          "id": "check-result:KDG-CHECK-DEMO-SATISFIED:demo-commit",
+          "policy_id": "KDG-POLICY-DEMO-SATISFIED",
+          "status": "satisfied"
+        }
+      ],
+      "violated": [
+        {
+          "check_id": "KDG-CHECK-DEMO-VIOLATED",
+          "evidence_refs": [
+            "finding:required-gate-removed",
+            "path:.github/workflows/ci.yml"
+          ],
+          "id": "check-result:KDG-CHECK-DEMO-VIOLATED:demo-commit",
+          "policy_id": "KDG-POLICY-DEMO-VIOLATED",
+          "status": "violated"
+        }
+      ]
+    },
+    "no_check_coverage": {
+      "inconclusive": [],
+      "missing_evidence": [],
+      "no_check_coverage": [
+        {
+          "evidence_refs": [
+            "finding:ci-static-analysis-weakened",
+            "path:.github/workflows/ci.yml"
+          ],
+          "finding_id": "ci-static-analysis-weakened",
+          "id": "coverage-gap:finding:ci-static-analysis-weakened",
+          "status": "no_check_coverage"
+        }
+      ],
+      "not_applicable": [],
+      "satisfied": [],
+      "violated": []
+    }
+  },
   "id": "review-packet:commit:demo-commit",
   "limits": {
     "omitted_record_count": 0,
@@ -26,6 +87,7 @@
         "status": "missing_evidence"
       }
     ],
+    "no_check_coverage": [],
     "not_applicable": [],
     "satisfied": [
       {
@@ -83,6 +145,19 @@
       "policy_id": "KDG-POLICY-DEMO-MISSING-EVIDENCE",
       "required_next_action": "Provide replacement coverage or record a scoped maintainer exception.",
       "status": "missing_evidence"
+    },
+    {
+      "evidence_refs": [
+        "finding:ci-static-analysis-weakened",
+        "path:.github/workflows/ci.yml"
+      ],
+      "finding_id": "ci-static-analysis-weakened",
+      "id": "recommendation:coverage-gap:ci-static-analysis-weakened",
+      "missing_evidence": [
+        "accepted named-check coverage decision"
+      ],
+      "required_next_action": "Decide whether this deterministic finding needs a named check, accepted exception path, or should remain raw evidence only.",
+      "status": "no_check_coverage"
     }
   ],
   "required_exceptions": [

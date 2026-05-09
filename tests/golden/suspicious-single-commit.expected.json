@@ -81,6 +81,51 @@
   ],
   "review_packet": {
     "artifact_type": "review_packet",
+    "expert_question_groups": {
+      "UQ-004": {
+        "inconclusive": [],
+        "missing_evidence": [
+          {
+            "check_id": "KDG-CHECK-REMOVED-TEST",
+            "id": "check-result:KDG-CHECK-REMOVED-TEST:fd87052a670a9c517eb85a14b57ff9abafa2b842",
+            "status": "missing_evidence"
+          },
+          {
+            "check_id": "KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+            "id": "check-result:KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED:fd87052a670a9c517eb85a14b57ff9abafa2b842",
+            "status": "missing_evidence"
+          }
+        ],
+        "no_check_coverage": [],
+        "not_applicable": [],
+        "satisfied": [],
+        "violated": []
+      },
+      "no_check_coverage": {
+        "inconclusive": [],
+        "missing_evidence": [],
+        "no_check_coverage": [
+          {
+            "finding_id": "suspicious-script-added",
+            "id": "coverage-gap:finding:suspicious-script-added",
+            "status": "no_check_coverage"
+          },
+          {
+            "finding_id": "prompt-injection-text",
+            "id": "coverage-gap:finding:prompt-injection-text",
+            "status": "no_check_coverage"
+          },
+          {
+            "finding_id": "high-risk-path",
+            "id": "coverage-gap:finding:high-risk-path",
+            "status": "no_check_coverage"
+          }
+        ],
+        "not_applicable": [],
+        "satisfied": [],
+        "violated": []
+      }
+    },
     "id": "review-packet:commit:fd87052a670a9c517eb85a14b57ff9abafa2b842",
     "limits": {
       "omitted_record_count": 0,
@@ -100,6 +145,7 @@
           "status": "missing_evidence"
         }
       ],
+      "no_check_coverage": [],
       "not_applicable": [],
       "satisfied": [],
       "violated": []
@@ -132,6 +178,33 @@
         ],
         "required_next_action": "Cite the replacement gate, provide required-check context, restore the gate, or record an explicit exception.",
         "status": "missing_evidence"
+      },
+      {
+        "finding_id": "suspicious-script-added",
+        "id": "recommendation:coverage-gap:suspicious-script-added",
+        "missing_evidence": [
+          "accepted named-check coverage decision"
+        ],
+        "required_next_action": "Decide whether this deterministic finding needs a named check, accepted exception path, or should remain raw evidence only.",
+        "status": "no_check_coverage"
+      },
+      {
+        "finding_id": "prompt-injection-text",
+        "id": "recommendation:coverage-gap:prompt-injection-text",
+        "missing_evidence": [
+          "accepted named-check coverage decision"
+        ],
+        "required_next_action": "Decide whether this deterministic finding needs a named check, accepted exception path, or should remain raw evidence only.",
+        "status": "no_check_coverage"
+      },
+      {
+        "finding_id": "high-risk-path",
+        "id": "recommendation:coverage-gap:high-risk-path",
+        "missing_evidence": [
+          "accepted named-check coverage decision"
+        ],
+        "required_next_action": "Decide whether this deterministic finding needs a named check, accepted exception path, or should remain raw evidence only.",
+        "status": "no_check_coverage"
       }
     ],
     "required_exceptions": [

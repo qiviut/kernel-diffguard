@@ -8,8 +8,15 @@ import sys
 from typing import Any
 
 JsonObject = dict[str, Any]
-CHECK_STATUSES = ("satisfied", "violated", "missing_evidence", "inconclusive", "not_applicable")
-ACTIONABLE_STATUSES = {"violated", "missing_evidence", "inconclusive"}
+CHECK_STATUSES = (
+    "satisfied",
+    "violated",
+    "missing_evidence",
+    "inconclusive",
+    "not_applicable",
+    "no_check_coverage",
+)
+ACTIONABLE_STATUSES = {"violated", "missing_evidence", "inconclusive", "no_check_coverage"}
 
 
 def build_review_packet(review: JsonObject) -> JsonObject:
@@ -26,7 +33,11 @@ def build_review_packet(review: JsonObject) -> JsonObject:
         "review_posture": review.get("review_posture", "review-assistant-not-verdict"),
         "subject": subject,
         "policy_result_groups": _group_check_results(check_results),
-        "recommendations": _recommendations(check_results),
+        "expert_question_groups": _expert_question_groups(review, check_results),
+        "recommendations": [
+            *_recommendations(check_results),
+            *_coverage_gap_recommendations(review, check_results),
+        ],
         "required_exceptions": _required_exceptions(check_results),
         "raw_finding_refs": _raw_finding_refs(review),
         "trust_boundary": "derived_review_signal",
@@ -53,12 +64,27 @@ def render_review_packet_text(packet: JsonObject) -> list[str]:
         refs = groups.get(status, [])
         lines.append(f"- {status}: {_format_refs(refs)}")
 
+    lines.append("Expert questions:")
+    question_groups = packet.get("expert_question_groups", {})
+    for question_id in sorted(str(key) for key in question_groups):
+        question = question_groups[question_id]
+        lines.append(f"- {question_id}:")
+        for status in CHECK_STATUSES:
+            refs = question.get(status, [])
+            if refs:
+                lines.append(f"  - {status}: {_format_refs(refs)}")
+
     recommendations = packet.get("recommendations", [])
     lines.append("Required next actions:")
     if not recommendations:
         lines.append("- none")
     for recommendation in recommendations:
-        policy_ref = recommendation.get("policy_id") or recommendation.get("check_id")
+        policy_ref = (
+            recommendation.get("policy_id")
+            or recommendation.get("check_id")
+            or recommendation.get("finding_id")
+            or recommendation.get("id")
+        )
         lines.append(
             f"- {policy_ref} [{recommendation['status']}]: "
             f"{recommendation['required_next_action']}"
@@ -156,10 +182,73 @@ def _group_check_results(check_results: list[JsonObject]) -> JsonObject:
     groups: JsonObject = {status: [] for status in CHECK_STATUSES}
     for result in check_results:
         status = str(result.get("status", "inconclusive"))
-        if status not in groups:
+        if status not in groups or status == "no_check_coverage":
             status = "inconclusive"
         groups[status].append(_result_ref(result))
     return groups
+
+
+def _expert_question_groups(review: JsonObject, check_results: list[JsonObject]) -> JsonObject:
+    groups: JsonObject = {}
+    for result in check_results:
+        question_id = str(result.get("expert_question", "unknown"))
+        status = str(result.get("status", "inconclusive"))
+        if status not in CHECK_STATUSES or status == "no_check_coverage":
+            status = "inconclusive"
+        question = groups.setdefault(question_id, {key: [] for key in CHECK_STATUSES})
+        question[status].append(_result_ref(result))
+    coverage_gaps = _coverage_gap_refs(review, check_results)
+    if coverage_gaps:
+        groups["no_check_coverage"] = {key: [] for key in CHECK_STATUSES}
+        groups["no_check_coverage"]["no_check_coverage"] = coverage_gaps
+    return groups
+
+
+def _coverage_gap_refs(review: JsonObject, check_results: list[JsonObject]) -> list[JsonObject]:
+    covered_findings = {
+        ref
+        for result in check_results
+        for ref in (str(item) for item in result.get("evidence_refs", []))
+        if ref.startswith("finding:") or ":finding:" in ref
+    }
+    gaps: list[JsonObject] = []
+    for finding_ref in _all_finding_refs(review):
+        finding = finding_ref["finding"]
+        canonical_ref = str(finding_ref["ref"])
+        finding_id = str(finding.get("id", "unknown"))
+        if f"finding:{finding_id}" in covered_findings or canonical_ref in covered_findings:
+            continue
+        gaps.append(
+            {
+                "id": f"coverage-gap:{canonical_ref}",
+                "status": "no_check_coverage",
+                "finding_id": finding_id,
+                "evidence_refs": _finding_evidence_refs(finding, canonical_ref),
+            }
+        )
+    return gaps
+
+
+def _coverage_gap_recommendations(
+    review: JsonObject, check_results: list[JsonObject]
+) -> list[JsonObject]:
+    recommendations: list[JsonObject] = []
+    for gap in _coverage_gap_refs(review, check_results):
+        finding_id = gap["finding_id"]
+        recommendations.append(
+            {
+                "id": f"recommendation:coverage-gap:{finding_id}",
+                "status": "no_check_coverage",
+                "required_next_action": (
+                    "Decide whether this deterministic finding needs a named check, "
+                    "accepted exception path, or should remain raw evidence only."
+                ),
+                "evidence_refs": gap["evidence_refs"],
+                "missing_evidence": ["accepted named-check coverage decision"],
+                "finding_id": finding_id,
+            }
+        )
+    return recommendations
 
 
 def _recommendations(check_results: list[JsonObject]) -> list[JsonObject]:
@@ -199,16 +288,34 @@ def _required_exceptions(check_results: list[JsonObject]) -> list[JsonObject]:
 
 
 def _raw_finding_refs(review: JsonObject) -> list[str]:
-    refs: list[str] = []
+    return _unique([str(item["ref"]) for item in _all_finding_refs(review)])
+
+
+def _all_findings(review: JsonObject) -> list[JsonObject]:
+    return [item["finding"] for item in _all_finding_refs(review)]
+
+
+def _all_finding_refs(review: JsonObject) -> list[JsonObject]:
+    findings: list[JsonObject] = []
     for finding in review.get("findings", []):
         if isinstance(finding, dict) and isinstance(finding.get("id"), str):
-            refs.append(f"finding:{finding['id']}")
+            findings.append({"finding": finding, "ref": f"finding:{finding['id']}"})
     for commit_review in review.get("commits", []):
         commit = commit_review.get("commit", "unknown")
         for finding in commit_review.get("findings", []):
             if isinstance(finding, dict) and isinstance(finding.get("id"), str):
-                refs.append(f"commit:{commit}:finding:{finding['id']}")
-    return _unique(refs)
+                findings.append(
+                    {"finding": finding, "ref": f"commit:{commit}:finding:{finding['id']}"}
+                )
+    return findings
+
+
+def _finding_evidence_refs(finding: JsonObject, canonical_ref: str) -> list[str]:
+    refs = finding.get("evidence_refs")
+    if not isinstance(refs, list):
+        refs = finding.get("evidence", [])
+    evidence_refs = [str(ref) for ref in refs] if isinstance(refs, list) else []
+    return _unique([canonical_ref, *evidence_refs])
 
 
 def _packet_evidence_refs(review: JsonObject, check_results: list[JsonObject]) -> list[str]:
