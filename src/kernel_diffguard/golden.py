@@ -31,6 +31,8 @@ def run_golden_manifest(manifest_path: Path | str) -> GoldenRunResult:
 
     manifest = Path(manifest_path)
     data = json.loads(manifest.read_text())
+    if data.get("manifest_version", 1) != 1:
+        raise ValueError(f"unsupported golden manifest_version: {data.get('manifest_version')!r}")
     base_dir = manifest.parent
     changed_cases: list[str] = []
     report_parts: list[str] = []
@@ -43,7 +45,7 @@ def run_golden_manifest(manifest_path: Path | str) -> GoldenRunResult:
         actual = _run_case(case, base_dir)
         if actual != expected:
             changed_cases.append(case_name)
-            report_parts.append(_diff_case(case_name, expected, actual))
+            report_parts.append(_diff_case(case_name, expected, actual, case))
 
     if changed_cases:
         return GoldenRunResult(1, len(cases), changed_cases, "\n".join(report_parts))
@@ -286,7 +288,9 @@ def _resolve_command(command: list[str]) -> list[str]:
     return command
 
 
-def _diff_case(case_name: str, expected: JsonObject, actual: JsonObject) -> str:
+def _diff_case(
+    case_name: str, expected: JsonObject, actual: JsonObject, case: JsonObject
+) -> str:
     expected_text = json.dumps(expected, indent=2, sort_keys=True).splitlines(keepends=True)
     actual_text = json.dumps(actual, indent=2, sort_keys=True).splitlines(keepends=True)
     diff = difflib.unified_diff(
@@ -295,7 +299,76 @@ def _diff_case(case_name: str, expected: JsonObject, actual: JsonObject) -> str:
         fromfile=f"{case_name}:expected",
         tofile=f"{case_name}:actual",
     )
-    return f"Golden analysis changed for {case_name}:\n" + "".join(diff)
+    sections = _change_sections(expected, actual, case)
+    return (
+        f"Golden analysis changed for {case_name}:\n"
+        f"{sections}\n"
+        "Full normalized JSON diff:\n"
+        + "".join(diff)
+    )
+
+
+def _change_sections(expected: JsonObject, actual: JsonObject, case: JsonObject) -> str:
+    changed_paths = sorted(_changed_paths(expected, actual))
+    categories: dict[str, list[str]] = {
+        "Stable facts": [],
+        "Changed findings": [],
+        "Changed policy/check results": [],
+        "Changed missing-evidence obligations": [],
+    }
+    for path in changed_paths:
+        categories[_path_category(path)].append(path)
+
+    ignored = sorted(str(field) for field in case.get("ignore_fields", []))
+    normalized = sorted(str(field) for field in case.get("normalize_fields", {}))
+    lines = ["Review sections:"]
+    for title, paths in categories.items():
+        lines.append(f"- {title}: {_format_paths(paths)}")
+    lines.append(
+        "- Allowed metadata drift: "
+        f"ignored={_format_paths(ignored)}, normalized={_format_paths(normalized)}"
+    )
+    return "\n".join(lines)
+
+
+def _changed_paths(expected: object, actual: object, path: str = "$") -> set[str]:
+    if expected == actual:
+        return set()
+    if isinstance(expected, dict) and isinstance(actual, dict):
+        paths: set[str] = set()
+        keys = set(expected) | set(actual)
+        for key in keys:
+            child = f"{path}.{key}"
+            if key not in expected or key not in actual:
+                paths.add(child)
+            else:
+                paths.update(_changed_paths(expected[key], actual[key], child))
+        return paths
+    if isinstance(expected, list) and isinstance(actual, list):
+        paths = set()
+        max_len = max(len(expected), len(actual))
+        for index in range(max_len):
+            child = f"{path}[{index}]"
+            if index >= len(expected) or index >= len(actual):
+                paths.add(child)
+            else:
+                paths.update(_changed_paths(expected[index], actual[index], child))
+        return paths
+    return {path}
+
+
+def _path_category(path: str) -> str:
+    if "missing_evidence" in path or "required_next_action" in path:
+        return "Changed missing-evidence obligations"
+    if "expert_check_results" in path or "policy_check_results" in path:
+        return "Changed policy/check results"
+    if "findings" in path or "kernel_impacts" in path:
+        return "Changed findings"
+    return "Stable facts"
+
+
+def _format_paths(paths: list[str]) -> str:
+    return ", ".join(paths) if paths else "none"
 
 
 def _resolve_path(base_dir: Path, path: str) -> Path:

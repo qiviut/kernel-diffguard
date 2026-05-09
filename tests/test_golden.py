@@ -252,4 +252,62 @@ def test_golden_runner_reports_finding_diff(tmp_path: Path):
     assert result.exit_code == 1
     assert result.changed_cases == ["changed-case"]
     assert "changed-case" in result.report
+    assert "Review sections:" in result.report
+    assert "- Stable facts: none" in result.report
+    assert "- Changed findings: $.findings[0]" in result.report
+    assert "- Changed policy/check results: none" in result.report
+    assert "- Changed missing-evidence obligations: none" in result.report
+    assert "- Allowed metadata drift: ignored=none, normalized=none" in result.report
+    assert "Full normalized JSON diff:" in result.report
     assert '"id": "new"' in result.report
+
+
+def test_golden_runner_reports_policy_and_missing_evidence_diff(tmp_path: Path):
+    expected = tmp_path / "expected.json"
+    expected.write_text(
+        json.dumps(
+            {
+                "expert_check_results": [
+                    {
+                        "check_id": "KDG-CHECK-REMOVED-TEST",
+                        "status": "satisfied",
+                        "missing_evidence": [],
+                    }
+                ]
+            },
+            indent=2,
+        )
+    )
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "cases": [
+                    {
+                        "name": "policy-change",
+                        "command": [
+                            "python",
+                            "-c",
+                            "import json; print(json.dumps({'expert_check_results': [{"
+                            "'check_id': 'KDG-CHECK-REMOVED-TEST', "
+                            "'status': 'missing_evidence', "
+                            "'missing_evidence': ['replacement coverage evidence']}]}))",
+                        ],
+                        "expected": str(expected),
+                        "ignore_fields": ["duration_ms"],
+                        "normalize_fields": {"commit": "<commit>"},
+                    }
+                ]
+            }
+        )
+    )
+
+    result = run_golden_manifest(manifest)
+
+    assert result.exit_code == 1
+    assert "- Changed policy/check results: $.expert_check_results[0].status" in result.report
+    assert (
+        "- Changed missing-evidence obligations: $.expert_check_results[0].missing_evidence[0]"
+        in result.report
+    )
+    assert "- Allowed metadata drift: ignored=duration_ms, normalized=commit" in result.report
