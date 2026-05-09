@@ -61,6 +61,50 @@
       "id": "drivers"
     }
   ],
+  "review_packet": {
+    "artifact_type": "review_packet",
+    "id": "review-packet:commit:2aa2ec3813929248541e35f3b89a285e6778a69b",
+    "limits": {
+      "omitted_record_count": 0,
+      "truncated": false
+    },
+    "policy_result_groups": {
+      "inconclusive": [],
+      "missing_evidence": [],
+      "not_applicable": [
+        {
+          "check_id": "KDG-CHECK-REMOVED-TEST",
+          "id": "check-result:KDG-CHECK-REMOVED-TEST:2aa2ec3813929248541e35f3b89a285e6778a69b",
+          "status": "not_applicable"
+        },
+        {
+          "check_id": "KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+          "id": "check-result:KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED:2aa2ec3813929248541e35f3b89a285e6778a69b",
+          "status": "not_applicable"
+        }
+      ],
+      "satisfied": [],
+      "violated": []
+    },
+    "raw_finding_refs": [
+      "finding:linux-security-cue",
+      "finding:high-risk-path"
+    ],
+    "recommendations": [],
+    "required_exceptions": [],
+    "review_posture": "review-assistant-not-verdict",
+    "risk_hints": [
+      "human-review-required",
+      "raw-findings-are-evidence-not-verdicts",
+      "not-maliciousness-verdict"
+    ],
+    "schema_version": 1,
+    "subject": {
+      "id": "<commit>",
+      "kind": "commit"
+    },
+    "trust_boundary": "derived_review_signal"
+  },
   "review_posture": "review-assistant-not-verdict",
   "schema_version": 1,
   "subject": "xen/privcmd: fix double-free in VMA split",

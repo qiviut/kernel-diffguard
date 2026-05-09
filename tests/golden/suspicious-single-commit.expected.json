@@ -79,6 +79,97 @@
       "id": "security-sensitive"
     }
   ],
+  "review_packet": {
+    "artifact_type": "review_packet",
+    "id": "review-packet:commit:fd87052a670a9c517eb85a14b57ff9abafa2b842",
+    "limits": {
+      "omitted_record_count": 0,
+      "truncated": false
+    },
+    "policy_result_groups": {
+      "inconclusive": [],
+      "missing_evidence": [
+        {
+          "check_id": "KDG-CHECK-REMOVED-TEST",
+          "id": "check-result:KDG-CHECK-REMOVED-TEST:fd87052a670a9c517eb85a14b57ff9abafa2b842",
+          "status": "missing_evidence"
+        },
+        {
+          "check_id": "KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+          "id": "check-result:KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED:fd87052a670a9c517eb85a14b57ff9abafa2b842",
+          "status": "missing_evidence"
+        }
+      ],
+      "not_applicable": [],
+      "satisfied": [],
+      "violated": []
+    },
+    "raw_finding_refs": [
+      "finding:removed-test",
+      "finding:ci-static-analysis-weakened",
+      "finding:suspicious-script-added",
+      "finding:prompt-injection-text",
+      "finding:high-risk-path"
+    ],
+    "recommendations": [
+      {
+        "check_id": "KDG-CHECK-REMOVED-TEST",
+        "id": "recommendation:KDG-CHECK-REMOVED-TEST",
+        "missing_evidence": [
+          "replacement coverage evidence",
+          "accepted exception record"
+        ],
+        "required_next_action": "Provide replacement test evidence, restore coverage, or record a scoped maintainer exception.",
+        "status": "missing_evidence"
+      },
+      {
+        "check_id": "KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+        "id": "recommendation:KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+        "missing_evidence": [
+          "required gate policy evidence",
+          "equivalent replacement command evidence",
+          "accepted exception record"
+        ],
+        "required_next_action": "Cite the replacement gate, provide required-check context, restore the gate, or record an explicit exception.",
+        "status": "missing_evidence"
+      }
+    ],
+    "required_exceptions": [
+      {
+        "check_id": "KDG-CHECK-REMOVED-TEST",
+        "id": "exception-required:KDG-CHECK-REMOVED-TEST",
+        "missing_evidence": [
+          "replacement coverage evidence",
+          "accepted exception record"
+        ],
+        "required_next_action": "Provide replacement test evidence, restore coverage, or record a scoped maintainer exception.",
+        "status": "missing_evidence"
+      },
+      {
+        "check_id": "KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+        "id": "exception-required:KDG-CHECK-CI-STATIC-ANALYSIS-WEAKENED",
+        "missing_evidence": [
+          "required gate policy evidence",
+          "equivalent replacement command evidence",
+          "accepted exception record"
+        ],
+        "required_next_action": "Cite the replacement gate, provide required-check context, restore the gate, or record an explicit exception.",
+        "status": "missing_evidence"
+      }
+    ],
+    "review_posture": "review-assistant-not-verdict",
+    "risk_hints": [
+      "human-review-required",
+      "raw-findings-are-evidence-not-verdicts",
+      "not-maliciousness-verdict"
+    ],
+    "schema_version": 1,
+    "subject": {
+      "id": "<commit>",
+      "kind": "commit"
+    },
+    "trust_boundary": "derived_review_signal"
+  },
   "review_posture": "review-assistant-not-verdict",
   "schema_version": 1,
   "subject": "Maintenance update",

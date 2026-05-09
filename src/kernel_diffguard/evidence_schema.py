@@ -97,6 +97,23 @@ ARTIFACT_SCHEMAS: dict[str, JsonObject] = {
         "required_fields": [*_COMMON_REQUIRED_FIELDS, "summary", "recommended_action"],
         "hostile_fields": ["summary", "recommended_action"],
     },
+    "review_packet": {
+        "summary": (
+            "Human-oriented grouping of check results, required evidence, "
+            "exceptions, and raw finding refs."
+        ),
+        "trust_boundaries": ["derived_review_signal"],
+        "required_fields": [
+            *_COMMON_REQUIRED_FIELDS,
+            "review_posture",
+            "subject",
+            "policy_result_groups",
+            "recommendations",
+            "required_exceptions",
+            "raw_finding_refs",
+        ],
+        "hostile_fields": ["subject", "recommendations", "required_exceptions"],
+    },
     "external_evidence_record": {
         "summary": "Provider-neutral OpenSSF-aligned snapshot record consumed offline.",
         "trust_boundaries": ["external_evidence_snapshot_untrusted"],

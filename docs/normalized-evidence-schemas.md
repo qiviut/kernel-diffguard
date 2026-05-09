@@ -144,6 +144,14 @@ Additional required fields should include `policy_id`, `status`, `subject`, `evi
 
 Allowed statuses should include `satisfied`, `violated`, `missing_evidence`, `not_applicable`, and `inconclusive`. A policy check result should cite evidence and required action, not an opaque probability of maliciousness.
 
+### review_packet
+
+Purpose: human-oriented grouping of deterministic check results, required actions, missing evidence, required exceptions, and raw finding references for one commit, range, or PR.
+
+Required fields should include `review_posture`, `subject`, `policy_result_groups`, `recommendations`, `required_exceptions`, `raw_finding_refs`, `evidence_refs`, `trust_boundary`, `limits`, and `risk_hints`.
+
+Packets must keep satisfied, violated, missing-evidence, inconclusive, and not-applicable check results separate from low-level findings. Recommendations must cite evidence references and a `policy_id` or `check_id` when available. Packets are review aids, not trust or maliciousness verdicts.
+
 ## Validation fixtures
 
 `tests/test_evidence_schemas.py` validates representative artifacts for all schema kinds and confirms that invalid fixtures fail closed when evidence references are missing, trust-boundary labels are unknown, named-check classifications are unknown, or check-result statuses fall outside the closed vocabulary.

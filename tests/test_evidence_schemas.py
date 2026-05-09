@@ -19,6 +19,7 @@ def test_schema_catalog_names_required_artifacts_and_trust_boundaries():
         "related_message_candidate",
         "finding",
         "recommendation",
+        "review_packet",
         "external_evidence_record",
         "lore_search_result_set",
         "github_commit_source",
@@ -191,6 +192,55 @@ def test_schema_fixture_validation_accepts_representative_artifacts():
                 "trust_boundary": "derived_review_signal",
                 "limits": {"truncated": False, "omitted_record_count": 0},
                 "risk_hints": ["human-review-required"],
+            },
+            {
+                "artifact_type": "review_packet",
+                "id": "review-packet:commit:abc123",
+                "review_posture": "review-assistant-not-verdict",
+                "subject": {"kind": "commit", "id": "abc123"},
+                "policy_result_groups": {
+                    "satisfied": [],
+                    "violated": [],
+                    "missing_evidence": [
+                        {
+                            "id": "check-result:removed-test:abc123",
+                            "check_id": "KDG-CHECK-REMOVED-TEST",
+                            "status": "missing_evidence",
+                            "evidence_refs": ["finding:removed-test"],
+                        }
+                    ],
+                    "inconclusive": [],
+                    "not_applicable": [],
+                },
+                "recommendations": [
+                    {
+                        "id": "recommendation:KDG-CHECK-REMOVED-TEST",
+                        "check_id": "KDG-CHECK-REMOVED-TEST",
+                        "status": "missing_evidence",
+                        "required_next_action": (
+                            "Provide replacement coverage or a scoped exception."
+                        ),
+                        "evidence_refs": ["finding:removed-test"],
+                        "missing_evidence": ["accepted exception"],
+                    }
+                ],
+                "required_exceptions": [
+                    {
+                        "id": "exception-required:KDG-CHECK-REMOVED-TEST",
+                        "check_id": "KDG-CHECK-REMOVED-TEST",
+                        "status": "missing_evidence",
+                        "required_next_action": (
+                            "Provide replacement coverage or a scoped exception."
+                        ),
+                        "evidence_refs": ["finding:removed-test"],
+                        "missing_evidence": ["accepted exception"],
+                    }
+                ],
+                "raw_finding_refs": ["finding:removed-test"],
+                "evidence_refs": ["check-result:removed-test:abc123", "finding:removed-test"],
+                "trust_boundary": "derived_review_signal",
+                "limits": {"truncated": False, "omitted_record_count": 0},
+                "risk_hints": ["human-review-required", "not-maliciousness-verdict"],
             },
             {
                 "artifact_type": "external_evidence_record",

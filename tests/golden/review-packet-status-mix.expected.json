@@ -1,0 +1,117 @@
+{
+  "artifact_type": "review_packet",
+  "evidence_refs": [
+    "check-result:KDG-CHECK-DEMO-SATISFIED:demo-commit",
+    "check-result:KDG-CHECK-DEMO-VIOLATED:demo-commit",
+    "check-result:KDG-CHECK-DEMO-MISSING-EVIDENCE:demo-commit",
+    "finding:removed-test",
+    "finding:ci-static-analysis-weakened"
+  ],
+  "id": "review-packet:commit:demo-commit",
+  "limits": {
+    "omitted_record_count": 0,
+    "truncated": false
+  },
+  "policy_result_groups": {
+    "inconclusive": [],
+    "missing_evidence": [
+      {
+        "check_id": "KDG-CHECK-DEMO-MISSING-EVIDENCE",
+        "evidence_refs": [
+          "finding:removed-test",
+          "path:tests/test_guard.py"
+        ],
+        "id": "check-result:KDG-CHECK-DEMO-MISSING-EVIDENCE:demo-commit",
+        "policy_id": "KDG-POLICY-DEMO-MISSING-EVIDENCE",
+        "status": "missing_evidence"
+      }
+    ],
+    "not_applicable": [],
+    "satisfied": [
+      {
+        "check_id": "KDG-CHECK-DEMO-SATISFIED",
+        "evidence_refs": [
+          "finding:replacement-test-added",
+          "path:tests/test_replacement.py"
+        ],
+        "id": "check-result:KDG-CHECK-DEMO-SATISFIED:demo-commit",
+        "policy_id": "KDG-POLICY-DEMO-SATISFIED",
+        "status": "satisfied"
+      }
+    ],
+    "violated": [
+      {
+        "check_id": "KDG-CHECK-DEMO-VIOLATED",
+        "evidence_refs": [
+          "finding:required-gate-removed",
+          "path:.github/workflows/ci.yml"
+        ],
+        "id": "check-result:KDG-CHECK-DEMO-VIOLATED:demo-commit",
+        "policy_id": "KDG-POLICY-DEMO-VIOLATED",
+        "status": "violated"
+      }
+    ]
+  },
+  "raw_finding_refs": [
+    "finding:removed-test",
+    "finding:ci-static-analysis-weakened"
+  ],
+  "recommendations": [
+    {
+      "check_id": "KDG-CHECK-DEMO-VIOLATED",
+      "evidence_refs": [
+        "finding:required-gate-removed",
+        "path:.github/workflows/ci.yml"
+      ],
+      "id": "recommendation:KDG-POLICY-DEMO-VIOLATED",
+      "missing_evidence": [],
+      "policy_id": "KDG-POLICY-DEMO-VIOLATED",
+      "required_next_action": "Restore the required gate or record an accepted exception.",
+      "status": "violated"
+    },
+    {
+      "check_id": "KDG-CHECK-DEMO-MISSING-EVIDENCE",
+      "evidence_refs": [
+        "finding:removed-test",
+        "path:tests/test_guard.py"
+      ],
+      "id": "recommendation:KDG-POLICY-DEMO-MISSING-EVIDENCE",
+      "missing_evidence": [
+        "replacement coverage evidence",
+        "accepted exception record"
+      ],
+      "policy_id": "KDG-POLICY-DEMO-MISSING-EVIDENCE",
+      "required_next_action": "Provide replacement coverage or record a scoped maintainer exception.",
+      "status": "missing_evidence"
+    }
+  ],
+  "required_exceptions": [
+    {
+      "check_id": "KDG-CHECK-DEMO-MISSING-EVIDENCE",
+      "evidence_refs": [
+        "finding:removed-test",
+        "path:tests/test_guard.py"
+      ],
+      "id": "exception-required:KDG-POLICY-DEMO-MISSING-EVIDENCE",
+      "missing_evidence": [
+        "replacement coverage evidence",
+        "accepted exception record"
+      ],
+      "policy_id": "KDG-POLICY-DEMO-MISSING-EVIDENCE",
+      "required_next_action": "Provide replacement coverage or record a scoped maintainer exception.",
+      "status": "missing_evidence"
+    }
+  ],
+  "review_posture": "review-assistant-not-verdict",
+  "risk_hints": [
+    "human-review-required",
+    "raw-findings-are-evidence-not-verdicts",
+    "not-maliciousness-verdict"
+  ],
+  "schema_version": 1,
+  "subject": {
+    "id": "demo-commit",
+    "kind": "commit"
+  },
+  "trust_boundary": "derived_review_signal"
+}
