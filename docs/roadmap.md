@@ -41,6 +41,7 @@
 - Define policy check result artifacts with statuses such as satisfied, violated, missing evidence, not applicable, and inconclusive.
 - Make policies inspectable and versioned; every violation must cite evidence and a required next action.
 - Treat historical baselines as candidate-policy material only. They may suggest envelopes, but they must not silently produce anomaly scores or implied suspicion.
+- Use the codebase-specific wisdom loop to promote observations into candidate expert questions, reviewed named checks/envelopes, and golden cases only after human/project acceptance.
 - Implement first synthetic policies for removed tests, CI/static-analysis weakening, high-authority executable additions, generated/source correspondence, and simple kernel retest obligations.
 
 ## Milestone 2.5: golden analysis regression in CI
